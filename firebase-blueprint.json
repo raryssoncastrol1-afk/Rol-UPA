@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "A registered member of the group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "cargo": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Unix timestamp in milliseconds" }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Information about a member's attendance in a specific session.",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "status": { "type": "string", "enum": ["presente", "ausente", "falta_justificada"] },
+        "justification": { "type": "string" }
+      },
+      "required": ["memberId", "memberName", "status"]
+    },
+    "AttendanceSession": {
+      "title": "Attendance Session",
+      "description": "A specific date/time when attendance was taken.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "number", "description": "Unix timestamp in milliseconds" },
+        "type": { "type": "string", "enum": ["programacao", "plenaria"] },
+        "callNumber": { "type": "number", "enum": [1, 2] },
+        "records": { "type": "array", "items": { "$ref": "AttendanceRecord" } }
+      },
+      "required": ["date", "records", "type"]
+    }
+  },
+  "firestore": {
+    "members": {
+      "schema": "Member",
+      "description": "Collection of all registered members."
+    },
+    "attendanceSessions": {
+      "schema": "AttendanceSession",
+      "description": "Collection of attendance sessions with member records."
+    }
+  }
+}
