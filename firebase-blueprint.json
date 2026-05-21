@@ -24,18 +24,42 @@
       },
       "required": ["memberId", "memberName", "status"]
     },
-    "AttendanceSession": {
-      "title": "Attendance Session",
-      "description": "A specific date/time when attendance was taken.",
+    "Society": {
+      "title": "Society",
+      "description": "A group representing a society.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "date": { "type": "number", "description": "Unix timestamp in milliseconds" },
-        "type": { "type": "string", "enum": ["programacao", "plenaria"] },
-        "callNumber": { "type": "number", "enum": [1, 2] },
-        "records": { "type": "array", "items": { "$ref": "AttendanceRecord" } }
+        "name": { "type": "string" }
       },
-      "required": ["date", "records", "type"]
+      "required": ["name"]
+    },
+    "Vote": {
+      "title": "Vote",
+      "description": "A cast vote.",
+      "type": "object",
+      "properties": {
+        "voterId": { "type": "string" },
+        "candidateId": { "type": "string" },
+        "role": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY", "TREASURER"] },
+        "ballotNumber": { "type": "number" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["voterId", "candidateId", "role", "ballotNumber", "timestamp"]
+    },
+    "Election": {
+      "title": "Election",
+      "description": "An election instance.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "currentRole": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY", "TREASURER"] },
+        "currentBallot": { "type": "number" },
+        "votes": { "type": "array", "items": { "$ref": "Vote" } },
+        "archived": { "type": "boolean" }
+      },
+      "required": ["name", "currentRole", "currentBallot", "votes"]
     }
   },
   "firestore": {
@@ -46,6 +70,14 @@
     "attendanceSessions": {
       "schema": "AttendanceSession",
       "description": "Collection of attendance sessions with member records."
+    },
+    "societies": {
+      "schema": "Society",
+      "description": "Collection of societies."
+    },
+    "elections": {
+      "schema": "Election",
+      "description": "Collection of elections."
     }
   }
 }

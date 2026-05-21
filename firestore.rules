@@ -27,43 +27,80 @@ service cloud.firestore {
     match /members/{memberId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidMember(incoming()) && isValidId(memberId);
+      allow create: if isSignedIn() && incoming().keys().hasAll(['name', 'createdAt']) && isValidMember(incoming()) && isValidId(memberId);
       allow update: if isSignedIn() && isValidMember(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'cargo'])
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'cargo', 'pinCode', 'uphEntryDate'])
       );
       allow delete: if isSignedIn();
     }
 
     function isValidMember(data) {
-      return data.keys().hasAll(['name', 'createdAt']) 
-        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
-        && (data.get('cargo', '') is string && data.get('cargo', '').size() <= 100)
-        && data.createdAt is number;
+      return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100))
+        && (!('cargo' in data) || data.cargo == null || (data.cargo is string && data.cargo.size() <= 100))
+        && (!('pinCode' in data) || data.pinCode == null || (data.pinCode is string && data.pinCode.size() >= 4 && data.pinCode.size() <= 10))
+        && (!('uphEntryDate' in data) || data.uphEntryDate == null || data.uphEntryDate is string)
+        && (!('createdAt' in data) || data.createdAt == null || data.createdAt is number || data.createdAt is timestamp);
     }
 
     // 2. Attendance Sessions
     match /attendanceSessions/{sessionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && isValidSession(incoming()) && isValidId(sessionId);
-      allow update: if false; // Sessions are immutable in this app (once saved, they are historic)
+      allow create: if isSignedIn() && incoming().keys().hasAll(['date', 'records', 'type']) && isValidSession(incoming()) && isValidId(sessionId);
+      allow update: if false; // Sessions are immutable
       allow delete: if isSignedIn();
     }
 
     function isValidSession(data) {
-      return data.keys().hasAll(['date', 'records', 'type'])
-        && data.date is number 
-        && data.type in ['programacao', 'plenaria']
-        && (data.get('callNumber', 1) in [1, 2])
-        && data.records is list && data.records.size() > 0 && data.records.size() <= 500
-        && isValidRecord(data.records[0]);
+      return (!('date' in data) || (data.date is number))
+        && (!('type' in data) || (data.type in ['programacao', 'plenaria']))
+        && (!('callNumber' in data) || (data.callNumber in [1, 2]))
+        && (!('records' in data) || (data.records is list && data.records.size() > 0 && data.records.size() <= 600 && isValidRecord(data.records[0])));
     }
 
     function isValidRecord(record) {
-      return record.keys().hasAll(['memberId', 'memberName', 'status'])
-        && record.memberId is string
-        && record.memberName is string
-        && record.status in ['presente', 'ausente', 'falta_justificada'];
+      return (!('memberId' in record) || record.memberId is string)
+        && (!('memberName' in record) || record.memberName is string)
+        && (!('status' in record) || record.status in ['presente', 'ausente', 'falta_justificada']);
+    }
+    
+    // 3. Societies
+    match /societies/{societyId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().keys().hasAll(['name']) && isValidSociety(incoming()) && isValidId(societyId);
+      allow update: if isSignedIn() && isValidSociety(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    function isValidSociety(data) {
+      return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100));
+    }
+
+    // 4. Elections
+    match /elections/{electionId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().keys().hasAll(['name', 'currentRole', 'currentBallot', 'votes', 'quorumRequired', 'presentCount']) && isValidElection(incoming()) && isValidId(electionId);
+      allow update: if isSignedIn() && isValidElection(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['currentRole', 'currentBallot', 'votes', 'archived', 'candidatesIds', 'presentCount', 'quorumRequired', 'declinedMembers', 'registeredCandidates'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    function isValidElection(data) {
+      return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100))
+        && (!('currentRole' in data) || (data.currentRole in ['PRESIDENT', 'VICE', 'SECRETARY', 'TREASURER']))
+        && (!('currentBallot' in data) || (data.currentBallot is number))
+        && (!('votes' in data) || (data.votes is list))
+        && (!('quorumRequired' in data) || (data.quorumRequired is number))
+        && (!('presentCount' in data) || (data.presentCount is number))
+        && (!('candidatesIds' in data) || (data.candidatesIds is list))
+        && (!('declinedMembers' in data) || (data.declinedMembers is list))
+        && (!('registeredCandidates' in data) || (data.registeredCandidates is list))
+        && (!('sessionId' in data) || (data.sessionId is string));
     }
   }
 }

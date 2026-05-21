@@ -2,5 +2,5 @@
   "name": "Rol de membros da UPH",
   "description": "Sistema simples para cadastro de membros e controle de frequência (chamada) com geração de relatórios.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

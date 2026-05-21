@@ -3,6 +3,8 @@ export interface Member {
   name: string;
   cargo?: string;
   createdAt: number;
+  pinCode?: string;
+  uphEntryDate?: string;
 }
 
 export type AttendanceStatus = 'presente' | 'ausente' | 'falta_justificada';
@@ -21,4 +23,35 @@ export interface AttendanceSession {
   type: SessionType;
   callNumber?: 1 | 2;
   records: AttendanceRecord[];
+  createdAt?: any;
+}
+
+export enum Role {
+  PRESIDENT = 'PRESIDENT',
+  VICE = 'VICE',
+  SECRETARY = 'SECRETARY',
+  TREASURER = 'TREASURER',
+}
+
+export interface Vote {
+  voterId: string;
+  candidateId: string;
+  role: Role;
+  ballotNumber: number;
+  timestamp: number;
+}
+
+export interface Election {
+  id: string;
+  name: string;
+  currentRole: Role;
+  currentBallot: 1 | 2 | 3;
+  quorumRequired: number;
+  presentCount: number;
+  votes: Vote[];
+  archived?: boolean;
+  candidatesIds?: string[]; // Used specifically for the 3rd ballot runoff
+  registeredCandidates?: string[]; // Registered candidates for the election/role
+  sessionId?: string;
+  declinedMembers?: string[]; // Members who declined candidacy
 }
