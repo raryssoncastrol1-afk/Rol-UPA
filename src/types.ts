@@ -29,7 +29,8 @@ export interface AttendanceSession {
 export enum Role {
   PRESIDENT = 'PRESIDENT',
   VICE = 'VICE',
-  SECRETARY = 'SECRETARY',
+  SECRETARY_1 = 'SECRETARY_1',
+  SECRETARY_2 = 'SECRETARY_2',
   TREASURER = 'TREASURER',
 }
 

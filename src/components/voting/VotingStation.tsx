@@ -14,19 +14,23 @@ import {
   AlertCircle,
   Trophy,
   History,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { useMembers, useElections, useSessions } from '../../hooks/useData';
 import { Election, Role, Vote } from '../../types';
+import { VotingSimulator } from './VotingSimulator';
+import { ElectionReportModal } from './ElectionReportModal';
 
 const ROLE_NAMES: Record<Role, string> = {
   [Role.PRESIDENT]: 'Presidente',
   [Role.VICE]: 'Vice-Presidente',
-  [Role.SECRETARY]: 'Secretário(a)',
+  [Role.SECRETARY_1]: '1º Secretário(a)',
+  [Role.SECRETARY_2]: '2º Secretário(a)',
   [Role.TREASURER]: 'Tesoureiro(a)',
 };
 
-const ROLES_LIST = [Role.PRESIDENT, Role.VICE, Role.SECRETARY, Role.TREASURER];
+const ROLES_LIST = [Role.PRESIDENT, Role.VICE, Role.SECRETARY_1, Role.SECRETARY_2, Role.TREASURER];
 
 const getElectedMemberIds = (votes: Vote[], presentCount: number, currentRole: Role): string[] => {
   if (!votes || votes.length === 0) return [];
@@ -78,6 +82,7 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
   const [showPendingVoters, setShowPendingVoters] = useState(false);
   const [selectedCandidateToAdd, setSelectedCandidateToAdd] = useState('');
   const [candidateToConfirm, setCandidateToConfirm] = useState<any | null>(null);
+  const [showReportElectionId, setShowReportElectionId] = useState<string | null>(null);
 
   const activeElection = elections.find(e => e.id === selectedElectionId);
   const activeVoterElection = elections.find(e => !e.archived);
@@ -215,12 +220,23 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
               </div>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              {election.votes && election.votes.length > 0 && (
+                <button
+                  onClick={() => setShowReportElectionId(election.id)}
+                  className="px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl font-sans font-bold text-xs flex items-center gap-1.5 border border-emerald-100 shadow-sm"
+                  title="Gerar Relatório da Eleição"
+                >
+                  <FileText className="w-4 h-4 text-emerald-600 font-bold" />
+                  Relatório
+                </button>
+              )}
               <button 
                 onClick={() => { setSelectedElectionId(election.id); setMode('admin'); }}
-                className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 flex-1 sm:flex-none justify-center flex"
+                className="p-2.5 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 flex-1 sm:flex-none justify-center flex items-center gap-1.5 border border-slate-200"
                 title="Administrar"
               >
                 <Shield className="w-5 h-5" />
+                <span className="sm:hidden font-bold text-xs font-sans">Administrar</span>
               </button>
             </div>
           </div>
@@ -238,6 +254,15 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
 
     const declinedMembers = activeElection.declinedMembers || [];
     const registeredCandidates = activeElection.registeredCandidates || [];
+
+    const electionSession = sessions.find(s => s.id === activeElection.sessionId);
+    const presentMembers = electionSession 
+      ? members.filter(m => electionSession.records.find(r => r.memberId === m.id && r.status === 'presente'))
+      : members;
+
+    const votedMemberIds = currentVotes.map(v => v.voterId);
+    const pendingMembers = presentMembers.filter(m => !votedMemberIds.includes(m.id));
+    const isAllVoted = presentMembers.length > 0 && pendingMembers.length === 0;
 
     const electedMemberIds = getElectedMemberIds(
       activeElection.votes,
@@ -263,8 +288,8 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
       
     const presentCount = Number(activeElection.presentCount) || 0;
     const majorityRequired = Math.floor(presentCount / 2) + 1;
-    const winnerId = sortedCandidates.find(([, count]) => Number(count) >= majorityRequired)?.[0];
-    const winner = members.find(m => m.id === winnerId);
+    const winnerId = isAllVoted ? sortedCandidates.find(([, count]) => Number(count) >= majorityRequired)?.[0] : undefined;
+    const winner = winnerId ? members.find(m => m.id === winnerId) : undefined;
 
     const handleAddCandidate = (memberId: string) => {
       if (!memberId) return;
@@ -316,15 +341,6 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
       }
     };
 
-    const electionSession = sessions.find(s => s.id === activeElection.sessionId);
-    const presentMembers = electionSession 
-      ? members.filter(m => electionSession.records.find(r => r.memberId === m.id && r.status === 'presente'))
-      : members;
-
-    const votedMemberIds = currentVotes.map(v => v.voterId);
-    const pendingMembers = presentMembers.filter(m => !votedMemberIds.includes(m.id));
-    const isAllVoted = presentMembers.length > 0 && pendingMembers.length === 0;
-
     // Reactively close modal when everyone has voted
     if (isAllVoted && showPendingVoters) {
       setShowPendingVoters(false);
@@ -360,10 +376,19 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                 e.preventDefault();
                 setShowDeleteConfirm(true);
               }}
-              className="flex items-center gap-2 text-red-600 font-bold hover:text-red-800 ml-4"
+              className="flex items-center gap-2 text-red-600 font-bold hover:text-red-800 ml-4 font-sans"
             >
               <Trash2 className="w-4 h-4" /> Excluir
             </button>
+            {activeElection.votes && activeElection.votes.length > 0 && (
+              <button 
+                onClick={() => setShowReportElectionId(activeElection.id)} 
+                className="flex items-center gap-1.5 text-emerald-700 font-sans font-bold hover:text-emerald-900 ml-4 border-l border-slate-200 pl-4 text-sm"
+                title="Visualizar Relatório de Eleição"
+              >
+                <FileText className="w-4 h-4 text-emerald-600" /> Relatório
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-4 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
             <span className="text-xs sm:text-sm font-bold truncate">
@@ -485,6 +510,30 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
           </div>
         )}
 
+        {activeElection.archived && (
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 text-white p-6 md:p-8 rounded-3xl shadow-lg relative overflow-hidden animate-in fade-in slide-in-from-top-6 duration-500">
+            <div className="absolute right-0 top-0 p-6 opacity-10 pointer-events-none">
+              <Trophy className="w-40 h-40" />
+            </div>
+            <div className="max-w-xl relative">
+              <span className="bg-emerald-900/40 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full inline-block mb-3 border border-emerald-400/30 font-sans">
+                Processo Concluído (Art. 32d)
+              </span>
+              <h3 className="text-2xl font-black mb-2">Eleição Finalizada com Sucesso!</h3>
+              <p className="text-emerald-100/95 text-sm leading-relaxed mb-6 font-medium">
+                Todos os cargos oficiais foram devidamente decididos e o escrutínio foi encerrado. O relatório consolidado de votos está pronto para ser emitido, revisado ou impresso da mesa.
+              </p>
+              <button
+                onClick={() => setShowReportElectionId(activeElection.id)}
+                className="px-6 py-3.5 bg-white text-emerald-950 hover:bg-emerald-50 text-xs font-black rounded-2xl flex items-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer font-sans"
+              >
+                <FileText className="w-4 h-4 text-emerald-700" />
+                Visualizar Relatório Oficial de Resultados
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
@@ -580,9 +629,13 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                   {currentVotes.length > 0 && !winner && (
                     <button 
                       onClick={handleNextBallot}
-                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black"
+                      disabled={!isAllVoted}
+                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 transition-all font-sans"
                     >
-                      Processar {activeElection.currentBallot}º Escrutínio <ChevronRight className="w-5 h-5" />
+                      {isAllVoted 
+                        ? `Processar ${activeElection.currentBallot}º Escrutínio` 
+                        : `Aguardando todos votarem (${currentVotes.length}/${presentMembers.length})`}
+                      <ChevronRight className="w-5 h-5" />
                     </button>
                   )}
                   </div>
@@ -621,7 +674,7 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                     className="flex-1 h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="">Selecione o membro...</option>
-                    {members
+                    {presentMembers
                       .filter(m => !registeredCandidates.includes(m.id) && !declinedMembers.includes(m.id) && !electedMemberIds.includes(m.id))
                       .sort((a, b) => a.name.localeCompare(b.name))
                       .map(m => (
@@ -716,6 +769,14 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                 </div>
               </div>
             )}
+
+            <VotingSimulator
+              activeElection={activeElection}
+              members={members}
+              presentMembers={presentMembers}
+              pendingMembers={pendingMembers}
+              electedMemberIds={electedMemberIds}
+            />
 
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
@@ -831,7 +892,12 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
       activeVoterElection.currentRole
     );
     
-    let candidatesList = members.filter(m => !declinedMembers.includes(m.id) && !electedMemberIds.includes(m.id));
+    const electionSession = sessions.find(s => s.id === activeVoterElection.sessionId);
+    const presentMembers = electionSession 
+      ? members.filter(m => electionSession.records.find(r => r.memberId === m.id && r.status === 'presente'))
+      : members;
+    
+    let candidatesList = presentMembers.filter(m => !declinedMembers.includes(m.id) && !electedMemberIds.includes(m.id));
     
     if (currentBallot === 3 && activeVoterElection.candidatesIds && activeVoterElection.candidatesIds.length > 0) {
       candidatesList = candidatesList.filter(m => activeVoterElection.candidatesIds!.includes(m.id));
@@ -960,6 +1026,18 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
           {mode === 'admin' && renderAdmin()}
         </motion.div>
       </AnimatePresence>
+
+      {showReportElectionId && (() => {
+        const reportElection = elections.find(e => e.id === showReportElectionId);
+        if (!reportElection) return null;
+        return (
+          <ElectionReportModal
+            election={reportElection}
+            members={members}
+            onClose={() => setShowReportElectionId(null)}
+          />
+        );
+      })()}
     </div>
   );
 };
