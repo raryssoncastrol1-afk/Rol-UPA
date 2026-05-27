@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Permite compilar manualmente pela aba Actions do GitHub se desejar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências do projeto
+        run: npm install
+
+      - name: Build do Web App (Vite/React)
+        run: npm run build
+
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Sincronizar Assets com o Capacitor
+        run: npx cap sync
+
+      - name: Dar permissão de execução ao Gradle
+        run: chmod +x android/gradlew
+
+      - name: Build do APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload do APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
