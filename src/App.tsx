@@ -11,7 +11,16 @@ import {
 import { useMembers, useSessions } from './hooks/useData';
 import { AttendanceStatus, AttendanceRecord, Member, SessionType } from './types';
 import { auth, db } from './firebase';
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, signInAnonymously } from 'firebase/auth';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged, 
+  User, 
+  signInAnonymously,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
+} from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Components
@@ -95,6 +104,40 @@ export default function App() {
       setAppRole('admin');
     } catch (error) {
       console.error("Erro ao fazer login admin:", error);
+    }
+  };
+
+  const handleEmailLogin = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      setAppRole('admin');
+    } catch (error: any) {
+      console.error("Erro ao fazer login admin com email:", error);
+      if (error?.code === 'auth/operation-not-allowed') {
+         alert('O provedor de login "E-mail e Senha" precisa ser ativado no console do seu Firebase! Vá em Authentication > Sign-in method > Adicionar Provedor > E-mail/Senha e ative-o.');
+      } else if (error?.code === 'auth/invalid-credential' || error?.code === 'auth/user-not-found' || error?.code === 'auth/wrong-password') {
+         alert('E-mail ou senha incorretos. Verifique suas credenciais e tente novamente.');
+      } else {
+         alert('Erro ao entrar: ' + error.message);
+      }
+    }
+  };
+
+  const handleEmailRegister = async (email: string, pass: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+      setAppRole('admin');
+    } catch (error: any) {
+      console.error("Erro ao registrar admin por email:", error);
+      if (error?.code === 'auth/operation-not-allowed') {
+         alert('O provedor de login "E-mail e Senha" precisa ser ativado no console do seu Firebase! Vá em Authentication > Sign-in method > Adicionar Provedor > E-mail/Senha e ative-o.');
+      } else if (error?.code === 'auth/email-already-in-use') {
+         alert('Este e-mail de administrador já está cadastrado. Tente entrar usando a opção correspondente.');
+      } else if (error?.code === 'auth/weak-password') {
+         alert('A senha informada é muito fraca. Ela deve conter pelo menos 6 caracteres.');
+      } else {
+         alert('Erro ao registrar administrador: ' + error.message);
+      }
     }
   };
 
@@ -224,6 +267,8 @@ export default function App() {
       <LoginScreen 
         onGoogleLogin={handleAdminLogin}
         onVoterLogin={handleVoterLogin}
+        onEmailLogin={handleEmailLogin}
+        onEmailRegister={handleEmailRegister}
       />
     );
   }
