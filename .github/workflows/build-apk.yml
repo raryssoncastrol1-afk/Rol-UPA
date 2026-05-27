@@ -28,7 +28,7 @@ jobs:
       - name: Configurar JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Regenerar Gradle Wrapper (previne corrupção de line-ending)
