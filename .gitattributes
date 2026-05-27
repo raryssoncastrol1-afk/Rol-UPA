@@ -1,0 +1,11 @@
+# Prevent git from modifying line endings of binary files
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Ensure shell scripts always use LF (Linux) line endings
+gradlew text eol=lf
+*.sh text eol=lf

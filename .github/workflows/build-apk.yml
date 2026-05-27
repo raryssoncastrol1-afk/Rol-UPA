@@ -31,6 +31,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Regenerar Gradle Wrapper (previne corrupção de line-ending)
+        run: |
+          cd android
+          gradle wrapper --gradle-version 8.14.3
+
       - name: Sincronizar Assets com o Capacitor
         run: npx cap sync
 
