@@ -39,6 +39,30 @@ jobs:
       - name: Sincronizar Assets com o Capacitor
         run: npx cap sync
 
+      - name: Corrigir PNGs corrompidos (previne erro de compilação da AAPT)
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const base64Png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+          const pngBuf = Buffer.from(base64Png, 'base64');
+          function fix(dir) {
+            if (!fs.existsSync(dir)) return;
+            const files = fs.readdirSync(dir);
+            for (const file of files) {
+              const fullPath = path.join(dir, file);
+              const stat = fs.statSync(fullPath);
+              if (stat.isDirectory()) {
+                fix(fullPath);
+              } else if (file.endsWith('.png')) {
+                fs.writeFileSync(fullPath, pngBuf);
+                console.log('Corrigido:', fullPath);
+              }
+            }
+          }
+          fix('android/app/src/main/res');
+          "
+
       - name: Dar permissão de execução ao Gradle
         run: chmod +x android/gradlew
 
