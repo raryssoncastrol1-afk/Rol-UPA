@@ -92,7 +92,7 @@ service cloud.firestore {
 
     function isValidElection(data) {
       return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100))
-        && (!('currentRole' in data) || (data.currentRole in ['PRESIDENT', 'VICE', 'SECRETARY', 'TREASURER']))
+        && (!('currentRole' in data) || (data.currentRole in ['PRESIDENT', 'VICE', 'SECRETARY_1', 'SECRETARY_2', 'TREASURER']))
         && (!('currentBallot' in data) || (data.currentBallot is number))
         && (!('votes' in data) || (data.votes is list))
         && (!('quorumRequired' in data) || (data.quorumRequired is number))

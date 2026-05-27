@@ -41,7 +41,7 @@
       "properties": {
         "voterId": { "type": "string" },
         "candidateId": { "type": "string" },
-        "role": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY", "TREASURER"] },
+        "role": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY_1", "SECRETARY_2", "TREASURER"] },
         "ballotNumber": { "type": "number" },
         "timestamp": { "type": "number" }
       },
@@ -54,7 +54,7 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "currentRole": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY", "TREASURER"] },
+        "currentRole": { "type": "string", "enum": ["PRESIDENT", "VICE", "SECRETARY_1", "SECRETARY_2", "TREASURER"] },
         "currentBallot": { "type": "number" },
         "votes": { "type": "array", "items": { "$ref": "Vote" } },
         "archived": { "type": "boolean" }
