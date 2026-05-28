@@ -92,6 +92,15 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      if (u) {
+        if (u.isAnonymous) {
+          setAppRole('voter');
+        } else {
+          setAppRole('admin');
+        }
+      } else {
+        setAppRole(null);
+      }
       setLoading(false);
     });
     return () => unsubscribe();

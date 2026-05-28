@@ -151,10 +151,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </button>
               </div>
             </div>
-            
-            <p className="text-[10px] text-slate-400/90 leading-relaxed text-center mt-3 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">
-              💡 <strong>Aviso para Celulares:</strong> Devido a diretivas de segurança em aplicativos híbridos Android, o login pelo Google pode ser bloqueado no WebView. Use <strong>E-mail e Senha</strong> para um acesso 100% nativo e estável.
-            </p>
           </div>
         )}
 
