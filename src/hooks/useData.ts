@@ -302,3 +302,4 @@ export function useElections() {
 
   return { elections, addElection, updateElection, castVote, removeElection };
 }
+

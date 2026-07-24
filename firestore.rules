@@ -102,5 +102,24 @@ service cloud.firestore {
         && (!('registeredCandidates' in data) || (data.registeredCandidates is list))
         && (!('sessionId' in data) || (data.sessionId is string));
     }
+    // 5. Treasury Transactions
+    match /treasuryTransactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().keys().hasAll(['date', 'description', 'type', 'amount', 'createdAt']) && isValidTreasuryTransaction(incoming()) && isValidId(transactionId);
+      allow update: if isSignedIn() && isValidTreasuryTransaction(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['date', 'description', 'type', 'amount', 'category', 'sheetName'])
+      );
+      allow delete: if isSignedIn();
+    }
+
+    function isValidTreasuryTransaction(data) {
+      return (!('date' in data) || (data.date is number))
+        && (!('description' in data) || (data.description is string && data.description.size() <= 200))
+        && (!('type' in data) || (data.type in ['income', 'expense']))
+        && (!('amount' in data) || (data.amount is number))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 100))
+        && (!('sheetName' in data) || data.sheetName == null || (data.sheetName is string && data.sheetName.size() <= 100))
+        && (!('createdAt' in data) || data.createdAt == null || data.createdAt is number || data.createdAt is timestamp);
+    }
   }
 }

@@ -56,3 +56,4 @@ export interface Election {
   sessionId?: string;
   declinedMembers?: string[]; // Members who declined candidacy
 }
+

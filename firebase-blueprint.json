@@ -60,6 +60,22 @@
         "archived": { "type": "boolean" }
       },
       "required": ["name", "currentRole", "currentBallot", "votes"]
+    },
+    "TreasuryTransaction": {
+      "title": "Treasury Transaction",
+      "description": "A financial transaction for the treasury.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "number" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "sheetName": { "type": "string" }
+      },
+      "required": ["date", "description", "type", "amount", "createdAt"]
     }
   },
   "firestore": {
@@ -78,6 +94,10 @@
     "elections": {
       "schema": "Election",
       "description": "Collection of elections."
+    },
+    "treasuryTransactions": {
+      "schema": "TreasuryTransaction",
+      "description": "Collection of treasury transactions."
     }
   }
 }

@@ -6,7 +6,7 @@ import {
   FileText, 
   LayoutDashboard,
   BarChart3,
-  Gavel,
+  Gavel
 } from 'lucide-react';
 import { useMembers, useSessions } from './hooks/useData';
 import { AttendanceStatus, AttendanceRecord, Member, SessionType } from './types';
@@ -109,7 +109,7 @@ export default function App() {
   const handleAdminLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       setAppRole('admin');
     } catch (error) {
       console.error("Erro ao fazer login admin:", error);
@@ -285,8 +285,13 @@ export default function App() {
   // Voter view selection
   if (appRole === 'voter') {
     if (!voterMemberId) {
-      setTimeout(handleLogout, 0);
-      return null;
+      return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#F8FAFC] space-y-4">
+           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+           <p className="text-slate-500 font-bold">Validando credenciais do eleitor...</p>
+           <button onClick={handleLogout} className="text-sm font-medium text-indigo-500 hover:text-indigo-700">Cancelar</button>
+        </div>
+      );
     }
 
     return (
@@ -398,6 +403,8 @@ export default function App() {
               {activeView === 'voting' && (
                 <VotingStation societyId="uph-society-id" />
               )}
+
+
             </motion.div>
           </AnimatePresence>
         </div>

@@ -12,6 +12,7 @@ interface ReportsViewProps {
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, removeSession }) => {
   const [sessionToDelete, setSessionToDelete] = React.useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   return (
     <div className="space-y-8">
@@ -40,10 +41,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, removeSessio
                 </div>
                 <button 
                   onClick={(e) => {
+                    e.stopPropagation();
                     e.preventDefault();
                     setSessionToDelete(session.id);
                   }}
-                  className="text-slate-200 hover:text-rose-500 p-1.5 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-all border border-slate-100 bg-slate-50 shadow-sm shrink-0 cursor-pointer"
+                  title="Excluir Sessão"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -85,27 +88,36 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, removeSessio
         <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-slate-800 mb-2">Remover Sessão</h3>
-            <p className="text-slate-600 mb-6">
+            <p className="text-slate-600 mb-6 font-normal">
               ATENÇÃO: A sessão será excluída do sistema e seus registros de presença irão sumir. Tem certeza que deseja continuar?
             </p>
+            {errorMsg && (
+              <div className="mb-4 p-3 bg-rose-50 text-rose-700 rounded-xl text-xs font-medium border border-rose-100">
+                {errorMsg}
+              </div>
+            )}
             <div className="flex gap-3">
               <button
-                onClick={() => setSessionToDelete(null)}
-                className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                onClick={() => {
+                  setSessionToDelete(null);
+                  setErrorMsg(null);
+                }}
+                className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 Voltar
               </button>
               <button
                 onClick={async () => {
                   try {
+                    setErrorMsg(null);
                     await removeSession(sessionToDelete);
                     setSessionToDelete(null);
                   } catch (error) {
-                    console.error(error);
-                    alert('Erro ao excluir sessão.');
+                    console.error("Erro ao excluir sessão:", error);
+                    setErrorMsg('Erro ao excluir sessão. Verifique suas permissões.');
                   }
                 }}
-                className="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Excluir
               </button>

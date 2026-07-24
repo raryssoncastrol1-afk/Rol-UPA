@@ -19,19 +19,35 @@ export const MembersView: React.FC<MembersViewProps> = ({
   onSelectMember 
 }) => {
   const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberModality, setNewMemberModality] = useState<string>('Não se aplica');
   const [newMemberCargo, setNewMemberCargo] = useState('');
   const [newMemberEntryDate, setNewMemberEntryDate] = useState('');
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
 
   const handleAdd = () => {
     const trimmedName = newMemberName.trim();
-    const trimmedCargo = newMemberCargo.trim();
-    if (trimmedName) {
-      addMember(trimmedName, trimmedCargo, newMemberEntryDate);
-      setNewMemberName('');
-      setNewMemberCargo('');
-      setNewMemberEntryDate('');
+    if (!trimmedName) return;
+
+    let finalName = trimmedName;
+    let finalCargo = newMemberCargo.trim();
+
+    if (newMemberModality === 'Diácono') {
+      if (!finalName.startsWith('Diác. ')) {
+        finalName = `Diác. ${finalName}`;
+      }
+      if (!finalCargo) finalCargo = 'Diácono';
+    } else if (newMemberModality === 'Presbítero') {
+      if (!finalName.startsWith('Presb. ')) {
+        finalName = `Presb. ${finalName}`;
+      }
+      if (!finalCargo) finalCargo = 'Presbítero';
     }
+
+    addMember(finalName, finalCargo, newMemberEntryDate);
+    setNewMemberName('');
+    setNewMemberModality('Não se aplica');
+    setNewMemberCargo('');
+    setNewMemberEntryDate('');
   };
 
   return (
@@ -43,8 +59,8 @@ export const MembersView: React.FC<MembersViewProps> = ({
           </div>
           <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Adicionar Novo Integrante</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-4">
             <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Nome Completo</label>
             <input 
               type="text" 
@@ -54,7 +70,19 @@ export const MembersView: React.FC<MembersViewProps> = ({
               onChange={(e) => setNewMemberName(e.target.value)}
             />
           </div>
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Modalidade</label>
+            <select
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
+              value={newMemberModality}
+              onChange={(e) => setNewMemberModality(e.target.value)}
+            >
+              <option value="Não se aplica">Não se aplica</option>
+              <option value="Diácono">Diácono</option>
+              <option value="Presbítero">Presbítero</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
             <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Cargo / Função</label>
             <input 
               type="text" 
@@ -64,7 +92,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               onChange={(e) => setNewMemberCargo(e.target.value)}
             />
           </div>
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Entrada na UPH</label>
             <input 
               type="date" 
@@ -73,7 +101,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               onChange={(e) => setNewMemberEntryDate(e.target.value)}
             />
           </div>
-          <div className="flex items-end">
+          <div className="md:col-span-2 flex items-end">
             <button 
               onClick={handleAdd}
               className="w-full bg-indigo-600 text-white h-[48px] rounded-2xl font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2 cursor-pointer"
