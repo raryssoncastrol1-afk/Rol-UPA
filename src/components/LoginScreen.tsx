@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
-import { ClipboardCheck, KeyRound } from 'lucide-react';
+import { ClipboardCheck, KeyRound, Mail, ArrowLeft } from 'lucide-react';
 
 interface LoginScreenProps {
   onGoogleLogin: () => void;
   onVoterLogin: (pin: string) => void;
   onEmailLogin: (email: string, pass: string) => Promise<void>;
   onEmailRegister: (email: string, pass: string) => Promise<void>;
+  onPasswordReset?: (email: string) => Promise<void>;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ 
   onGoogleLogin, 
   onVoterLogin,
   onEmailLogin,
-  onEmailRegister
+  onEmailRegister,
+  onPasswordReset
 }) => {
-  const [mode, setMode] = useState<'select' | 'voter_pin' | 'admin_login'>('select');
+  const [mode, setMode] = useState<'select' | 'voter_pin' | 'admin_login' | 'forgot_password'>('select');
   const [pin, setPin] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAdminRegister, setIsAdminRegister] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleVoterSubmitPIN = async () => {
     if (pin.length < 4) {
@@ -104,7 +107,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">Senha</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider">Senha</label>
+                  {!isAdminRegister && onPasswordReset && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot_password')}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 transition cursor-pointer"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  )}
+                </div>
                 <input 
                   type="password" 
                   value={password}
@@ -150,6 +164,59 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   Voltar ao início
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {mode === 'forgot_password' && (
+          <div className="space-y-4 text-left animate-in fade-in slide-in-from-right-4">
+            <h3 className="text-xl font-bold text-white text-center mb-1">Recuperar Senha</h3>
+            <p className="text-xs text-slate-400 text-center mb-4 leading-relaxed">
+              Informe o e-mail cadastrado do administrador para receber o link de redefinição de senha.
+            </p>
+
+            <div>
+              <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">E-mail Cadastrado</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu-admin@email.com"
+                className="w-full bg-slate-900/50 border border-slate-700 text-white px-4 py-2.5 rounded-xl focus:outline-none focus:border-indigo-500 font-sans text-sm focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button 
+                disabled={isResetting}
+                onClick={async () => {
+                  if (!email.trim()) {
+                    alert('Por favor, informe seu e-mail cadastrado.');
+                    return;
+                  }
+                  if (onPasswordReset) {
+                    setIsResetting(true);
+                    try {
+                      await onPasswordReset(email.trim());
+                      setMode('admin_login');
+                    } finally {
+                      setIsResetting(false);
+                    }
+                  }
+                }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors font-bold text-center cursor-pointer shadow-lg shadow-indigo-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                <span>{isResetting ? 'Enviando...' : 'Enviar Link de Redefinição'}</span>
+              </button>
+
+              <button 
+                onClick={() => setMode('admin_login')}
+                className="w-full py-2.5 text-xs text-slate-400 hover:text-slate-200 transition text-center flex items-center justify-center gap-1.5 mt-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Voltar para o login</span>
+              </button>
             </div>
           </div>
         )}

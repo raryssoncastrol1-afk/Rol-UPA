@@ -20,7 +20,8 @@ import {
   User, 
   signInAnonymously,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { hashPin } from './lib/cryptoUtils';
@@ -157,6 +158,22 @@ export default function App() {
          alert('A senha informada é muito fraca. Ela deve conter pelo menos 6 caracteres.');
       } else {
          alert('Erro ao registrar administrador: ' + error.message);
+      }
+    }
+  };
+
+  const handlePasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert('E-mail de recuperação de senha enviado com sucesso! Verifique sua caixa de entrada e a pasta de spam.');
+    } catch (error: any) {
+      console.error("Erro ao enviar recuperação de senha:", error);
+      if (error?.code === 'auth/user-not-found') {
+        alert('Nenhum usuário administrador cadastrado com este e-mail.');
+      } else if (error?.code === 'auth/invalid-email') {
+        alert('Formato de e-mail inválido.');
+      } else {
+        alert('Erro ao enviar recuperação de senha: ' + error.message);
       }
     }
   };
@@ -307,6 +324,7 @@ export default function App() {
         onVoterLogin={handleVoterLogin}
         onEmailLogin={handleEmailLogin}
         onEmailRegister={handleEmailRegister}
+        onPasswordReset={handlePasswordReset}
       />
     );
   }
