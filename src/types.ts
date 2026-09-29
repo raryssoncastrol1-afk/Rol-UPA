@@ -23,7 +23,7 @@ export interface AttendanceSession {
   type: SessionType;
   callNumber?: 1 | 2;
   records: AttendanceRecord[];
-  createdAt?: any;
+  createdAt?: number | { seconds: number; nanoseconds: number } | null;
 }
 
 export enum Role {
@@ -55,5 +55,21 @@ export interface Election {
   registeredCandidates?: string[]; // Registered candidates for the election/role
   sessionId?: string;
   declinedMembers?: string[]; // Members who declined candidacy
+}
+
+export interface TreasuryTransaction {
+  id: string;
+  date: number;
+  description: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  sheetName?: string | null;
+  createdAt?: number | { seconds: number; nanoseconds: number } | null;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system' | 'model';
+  content: string;
 }
 

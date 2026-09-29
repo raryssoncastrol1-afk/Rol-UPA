@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { z } from "zod";
 
 let aiClient: GoogleGenAI | null = null;
 function getGeminiClient() {
@@ -28,20 +29,52 @@ async function startServer() {
 
   app.use(express.json({ limit: "20mb" }));
 
+const MessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system", "model"]),
+  content: z.string().min(1).max(5000),
+});
+
+const TransactionSchema = z.object({
+  date: z.union([z.string(), z.number()]).optional(),
+  type: z.enum(["income", "expense"]).or(z.string()),
+  description: z.string().max(300),
+  category: z.string().max(100).optional(),
+  amount: z.number().finite(),
+  sheetName: z.string().max(100).optional(),
+});
+
+const AdditionalContextSchema = z.object({
+  selectedFile: z.string().max(200).optional(),
+  totalIncome: z.number().optional(),
+  totalExpense: z.number().optional(),
+  balance: z.number().optional(),
+  periodName: z.string().max(100).optional(),
+}).optional();
+
+const ChatRequestSchema = z.object({
+  messages: z.array(MessageSchema).min(1).max(50),
+  transactions: z.array(TransactionSchema).max(1000).optional(),
+  additionalContext: AdditionalContextSchema,
+});
+
   // API Route for Spreadsheet AI Reader / Assistant
   app.post("/api/ai/chat", async (req, res) => {
     try {
-      const { messages, transactions, additionalContext } = req.body;
-
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: "O campo 'messages' é obrigatório e deve ser um array." });
+      const parseResult = ChatRequestSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          error: "Payload inválido.", 
+          details: parseResult.error.flatten() 
+        });
       }
+
+      const { messages, transactions, additionalContext } = parseResult.data;
 
       const client = getGeminiClient();
 
       // Format spreadsheet data compactly for context
       let dataContext = "";
-      if (transactions && Array.isArray(transactions)) {
+      if (transactions && transactions.length > 0) {
         const fileInfo = additionalContext?.selectedFile ? `Arquivo Selecionado: ${additionalContext.selectedFile}` : "Todos os arquivos / Geral";
         const totalInc = additionalContext?.totalIncome !== undefined ? `R$ ${additionalContext.totalIncome.toFixed(2)}` : "N/A";
         const totalExp = additionalContext?.totalExpense !== undefined ? `R$ ${additionalContext.totalExpense.toFixed(2)}` : "N/A";
@@ -86,7 +119,7 @@ Diga que as consultas e análises rodam localmente com a inteligência leve e de
 `;
 
       // Map roles correctly: @google/genai requires 'model' instead of 'assistant'
-      const contents = messages.map((msg: any) => {
+      const contents = messages.map((msg) => {
         return {
           role: msg.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: msg.content }]
@@ -95,17 +128,18 @@ Diga que as consultas e análises rodam localmente com a inteligência leve e de
 
       // Insert spreadsheet context to help Gemini answer accurately
       if (dataContext) {
-        // We prepend the data context as the very first information
         contents.unshift({
           role: "user",
           parts: [{ text: `Abaixo estão os dados financeiros oficiais tirados de nossas planilhas para guiar suas respostas:\n${dataContext}` }]
         });
         
-        // Help tie it together
-        contents.push({
-          role: "user",
-          parts: [{ text: `Analise as planilhas fornecidas acima para responder à pergunta: "${messages[messages.length - 1].content}".` }]
-        });
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg) {
+          contents.push({
+            role: "user",
+            parts: [{ text: `Analise as planilhas fornecidas acima para responder à pergunta: "${lastMsg.content}".` }]
+          });
+        }
       }
 
       const response = await client.models.generateContent({
@@ -113,14 +147,15 @@ Diga que as consultas e análises rodam localmente com a inteligência leve e de
         contents: contents,
         config: {
           systemInstruction: systemInstruction,
-          temperature: 0.1, // low temperature for extreme factual accuracy, math calculations, and consistency
+          temperature: 0.1,
         }
       });
 
       res.json({ text: response.text });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro no chat IA:", error);
-      res.status(500).json({ error: error.message || "Erro interno do servidor ao processar chat com IA." });
+      const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor ao processar chat com IA.";
+      res.status(500).json({ error: errorMessage });
     }
   });
 

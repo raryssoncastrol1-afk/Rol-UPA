@@ -27,7 +27,9 @@ export const Header: React.FC<HeaderProps> = ({
     attendance: 'Controle de Presença',
     members: 'Rol de Membros',
     reports: 'Relatórios e Histórico',
-    statistics: 'Estatísticas de Frequência'
+    statistics: 'Estatísticas de Frequência',
+    voting: 'Sistema de Votação',
+    treasury: 'Tesouraria e Finanças'
   };
 
   return (

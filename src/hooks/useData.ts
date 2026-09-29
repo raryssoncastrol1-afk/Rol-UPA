@@ -4,6 +4,7 @@ import {
   addDoc, 
   deleteDoc, 
   doc, 
+  setDoc,
   onSnapshot, 
   query, 
   orderBy,
@@ -14,7 +15,8 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Member, AttendanceSession, Election, Vote } from '../types';
+import { Member, AttendanceSession, Election, Vote, TreasuryTransaction } from '../types';
+import { hashPin } from '../lib/cryptoUtils';
 
 enum OperationType {
   CREATE = 'create',
@@ -145,6 +147,21 @@ export function useMembers() {
         pinCode,
         createdAt: Date.now()
       });
+
+      // Synchronize voterPins index
+      if (pinCode) {
+        try {
+          const pinHash = await hashPin(pinCode);
+          await setDoc(doc(db, 'voterPins', pinHash), {
+            memberId: docRef.id,
+            memberName: name,
+            updatedAt: Date.now()
+          });
+        } catch (pinErr) {
+          console.error('Failed to sync voterPins on addMember:', pinErr);
+        }
+      }
+
       return docRef.id;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'members');
@@ -153,6 +170,15 @@ export function useMembers() {
 
   const removeMember = async (id: string) => {
     try {
+      const member = members.find(m => m.id === id);
+      if (member?.pinCode) {
+        try {
+          const pinHash = await hashPin(member.pinCode);
+          await deleteDoc(doc(db, 'voterPins', pinHash));
+        } catch (pinErr) {
+          console.error('Failed to remove voterPins index on removeMember:', pinErr);
+        }
+      }
       await deleteDoc(doc(db, 'members', id));
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `members/${id}`);
@@ -161,6 +187,25 @@ export function useMembers() {
 
   const updateMember = async (id: string, updates: Partial<Member>) => {
     try {
+      const existingMember = members.find(m => m.id === id);
+      // If PIN is changed, update voterPins index
+      if (updates.pinCode && updates.pinCode !== existingMember?.pinCode) {
+        try {
+          if (existingMember?.pinCode) {
+            const oldHash = await hashPin(existingMember.pinCode);
+            await deleteDoc(doc(db, 'voterPins', oldHash));
+          }
+          const newHash = await hashPin(updates.pinCode);
+          await setDoc(doc(db, 'voterPins', newHash), {
+            memberId: id,
+            memberName: updates.name || existingMember?.name || '',
+            updatedAt: Date.now()
+          });
+        } catch (pinErr) {
+          console.error('Failed to sync voterPins index on updateMember:', pinErr);
+        }
+      }
+
       await updateDoc(doc(db, 'members', id), updates);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `members/${id}`);
@@ -219,6 +264,14 @@ export function useSessions() {
     }
   };
 
+  const updateSession = async (id: string, updates: Partial<AttendanceSession>) => {
+    try {
+      await updateDoc(doc(db, 'attendanceSessions', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `attendanceSessions/${id}`);
+    }
+  };
+
   const removeSession = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'attendanceSessions', id));
@@ -227,7 +280,7 @@ export function useSessions() {
     }
   };
 
-  return { sessions, addSession, removeSession };
+  return { sessions, addSession, updateSession, removeSession };
 }
 
 export function useElections() {
@@ -301,5 +354,90 @@ export function useElections() {
   };
 
   return { elections, addElection, updateElection, castVote, removeElection };
+}
+
+export function useTreasury() {
+  const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setTransactions([]);
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = undefined;
+        }
+        return;
+      }
+
+      const q = query(collection(db, 'treasuryTransactions'), orderBy('date', 'desc'));
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const txList: TreasuryTransaction[] = [];
+        snapshot.forEach((doc) => {
+          txList.push({ id: doc.id, ...doc.data() } as TreasuryTransaction);
+        });
+        setTransactions(txList);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'treasuryTransactions');
+      });
+    });
+
+    return () => {
+      authUnsubscribe();
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  const addTransaction = async (tx: Omit<TreasuryTransaction, 'id' | 'createdAt'>) => {
+    try {
+      const docRef = await addDoc(collection(db, 'treasuryTransactions'), {
+        ...tx,
+        createdAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'treasuryTransactions');
+    }
+  };
+
+  const addTransactionsBatch = async (txList: Omit<TreasuryTransaction, 'id' | 'createdAt'>[]) => {
+    try {
+      const promises = txList.map(tx => 
+        addDoc(collection(db, 'treasuryTransactions'), {
+          ...tx,
+          createdAt: serverTimestamp()
+        })
+      );
+      await Promise.all(promises);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'treasuryTransactions');
+    }
+  };
+
+  const updateTransaction = async (id: string, updates: Partial<TreasuryTransaction>) => {
+    try {
+      await updateDoc(doc(db, 'treasuryTransactions', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `treasuryTransactions/${id}`);
+    }
+  };
+
+  const removeTransaction = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'treasuryTransactions', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `treasuryTransactions/${id}`);
+    }
+  };
+
+  return { 
+    transactions, 
+    addTransaction, 
+    addTransactionsBatch, 
+    updateTransaction, 
+    removeTransaction 
+  };
 }
 

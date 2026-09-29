@@ -21,43 +21,7 @@ import { useMembers, useElections, useSessions } from '../../hooks/useData';
 import { Election, Role, Vote } from '../../types';
 import { VotingSimulator } from './VotingSimulator';
 import { ElectionReportModal } from './ElectionReportModal';
-
-const ROLE_NAMES: Record<Role, string> = {
-  [Role.PRESIDENT]: 'Presidente',
-  [Role.VICE]: 'Vice-Presidente',
-  [Role.SECRETARY_1]: '1º Secretário(a)',
-  [Role.SECRETARY_2]: '2º Secretário(a)',
-  [Role.TREASURER]: 'Tesoureiro(a)',
-};
-
-const ROLES_LIST = [Role.PRESIDENT, Role.VICE, Role.SECRETARY_1, Role.SECRETARY_2, Role.TREASURER];
-
-const getElectedMemberIds = (votes: Vote[], presentCount: number, currentRole: Role): string[] => {
-  if (!votes || votes.length === 0) return [];
-  const electedIds: string[] = [];
-  const majorityRequired = Math.floor(presentCount / 2) + 1;
-
-  ROLES_LIST.forEach((r) => {
-    // Exclude the current active role from being counted as "already elected" 
-    // because the winner of the active role is still being displayed and confirmed.
-    if (r === currentRole) return;
-
-    for (let ballotNum = 1; ballotNum <= 3; ballotNum++) {
-      const ballotVotes = votes.filter(v => v.role === r && v.ballotNumber === ballotNum);
-      const voteCounts: Record<string, number> = {};
-      ballotVotes.forEach((v) => {
-        voteCounts[v.candidateId] = (voteCounts[v.candidateId] || 0) + 1;
-      });
-      const winnerId = Object.entries(voteCounts).find(([, count]) => count >= majorityRequired)?.[0];
-      if (winnerId) {
-        electedIds.push(winnerId);
-        break;
-      }
-    }
-  });
-
-  return electedIds;
-};
+import { ROLE_NAMES, ROLES_LIST, getElectedMemberIds } from '../../lib/electionUtils';
 
 export interface VotingStationProps {
   societyId?: string;

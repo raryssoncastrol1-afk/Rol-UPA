@@ -217,7 +217,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({ members, session
                 }}
                 itemStyle={{ color: '#4f46e5', fontWeight: 900, fontSize: '12px' }}
                 labelStyle={{ fontWeight: 900, fontSize: '10px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '5px' }}
-                formatter={(value: number) => [`${value}% de Assiduidade`, 'Status']}
+                formatter={(value: any) => [`${value}% de Assiduidade`, 'Status']}
                 labelFormatter={(label, items) => items[0]?.payload?.fullDate || label}
               />
               <Area 

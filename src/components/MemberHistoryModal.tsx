@@ -165,8 +165,8 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({ member, 
                       <YAxis hide domain={[0, 100]} />
                       <Tooltip 
                         contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
-                        formatter={(value: number) => [
-                          value === 100 ? 'Presente' : (value === 50 ? 'Justificada' : 'Ausente'),
+                        formatter={(value: any) => [
+                          Number(value) === 100 ? 'Presente' : (Number(value) === 50 ? 'Justificada' : 'Ausente'),
                           'Status'
                         ]}
                       />

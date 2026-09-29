@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, 
@@ -6,9 +6,10 @@ import {
   FileText, 
   LayoutDashboard,
   BarChart3,
-  Gavel
+  Gavel,
+  DollarSign
 } from 'lucide-react';
-import { useMembers, useSessions } from './hooks/useData';
+import { useMembers, useSessions, useTreasury } from './hooks/useData';
 import { AttendanceStatus, AttendanceRecord, Member, SessionType } from './types';
 import { auth, db } from './firebase';
 import { 
@@ -21,7 +22,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { hashPin } from './lib/cryptoUtils';
 
 // Components
 import { Sidebar } from './components/Sidebar';
@@ -29,13 +31,16 @@ import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { MembersView } from './components/MembersView';
 import { AttendanceView } from './components/AttendanceView';
-import { ReportsView } from './components/ReportsView';
 import { MemberHistoryModal } from './components/MemberHistoryModal';
-import { StatisticsView } from './components/StatisticsView';
-import { VotingStation } from './components/voting/VotingStation';
 import { LoginScreen } from './components/LoginScreen';
 
-type View = 'dashboard' | 'members' | 'attendance' | 'reports' | 'statistics' | 'voting';
+// Lazy-loaded heavy components (bundle splitting)
+const ReportsView = lazy(() => import('./components/ReportsView').then(m => ({ default: m.ReportsView })));
+const StatisticsView = lazy(() => import('./components/StatisticsView').then(m => ({ default: m.StatisticsView })));
+const VotingStation = lazy(() => import('./components/voting/VotingStation').then(m => ({ default: m.VotingStation })));
+const TreasuryView = lazy(() => import('./components/TreasuryView').then(m => ({ default: m.TreasuryView })));
+
+type View = 'dashboard' | 'members' | 'attendance' | 'reports' | 'statistics' | 'voting' | 'treasury';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -51,7 +56,13 @@ export default function App() {
   });
 
   const { members, addMember, removeMember, updateMember } = useMembers();
-  const { sessions, addSession, removeSession } = useSessions();
+  const { sessions, addSession, updateSession, removeSession } = useSessions();
+  const { 
+    transactions, 
+    addTransaction, 
+    addTransactionsBatch, 
+    removeTransaction 
+  } = useTreasury();
 
   // Selection states
   const [selectedMemberForHistory, setSelectedMemberForHistory] = useState<Member | null>(null);
@@ -155,18 +166,35 @@ export default function App() {
       const cleanPin = pin.trim();
       await signInAnonymously(auth);
       
-      const q = query(collection(db, 'members'), where('pinCode', '==', cleanPin));
-      const querySnapshot = await getDocs(q);
+      // 1. Try secure hashed PIN lookup first
+      const pinHash = await hashPin(cleanPin);
+      const pinDocSnap = await getDoc(doc(db, 'voterPins', pinHash));
       
-      if (querySnapshot.empty) {
-        await signOut(auth);
-        alert('PIN inválido ou membro não encontrado. Verifique o código e tente novamente.');
+      if (pinDocSnap.exists()) {
+        const pinData = pinDocSnap.data();
+        setVoterMemberId(pinData.memberId);
+        setAppRole('voter');
         return;
       }
-      
-      const matchedMember = querySnapshot.docs[0];
-      setVoterMemberId(matchedMember.id);
-      setAppRole('voter');
+
+      // 2. Fallback to direct member lookup for legacy pins not yet migrated
+      try {
+        const q = query(collection(db, 'members'), where('pinCode', '==', cleanPin));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const matchedMember = querySnapshot.docs[0];
+          setVoterMemberId(matchedMember.id);
+          setAppRole('voter');
+          return;
+        }
+      } catch (fallbackErr) {
+        console.warn('Fallback member PIN query restricted by rules:', fallbackErr);
+      }
+
+      // If neither lookup found the member
+      await signOut(auth);
+      alert('PIN inválido ou membro não encontrado. Verifique o código e tente novamente.');
     } catch (error: any) {
       console.error("Erro ao fazer login anonimo:", error);
       if (error?.code === 'auth/admin-restricted-operation') {
@@ -250,6 +278,7 @@ export default function App() {
     { id: 'reports', label: 'Relatórios Históricos', icon: FileText },
     { id: 'statistics', label: 'Estatísticas', icon: BarChart3 },
     { id: 'voting', label: 'Sistema de Votação', icon: Gavel },
+    { id: 'treasury', label: 'Tesouraria', icon: DollarSign },
   ];
 
   if (loading) {
@@ -312,7 +341,11 @@ export default function App() {
             </button>
           </header>
           <main className="flex-1 w-full overflow-y-auto bg-slate-50">
-            <VotingStation societyId="uph-society-id" voterMemberId={voterMemberId} />
+            <Suspense fallback={
+              <div className="p-8 text-center text-slate-400">Carregando painel de votação...</div>
+            }>
+              <VotingStation societyId="uph-society-id" voterMemberId={voterMemberId} />
+            </Suspense>
           </main>
         </div>
       </div>
@@ -386,23 +419,37 @@ export default function App() {
                 />
               )}
 
-              {activeView === 'reports' && (
-                <ReportsView 
-                  sessions={sessions} 
-                  removeSession={removeSession} 
-                />
-              )}
+              <Suspense fallback={
+                <div className="h-64 flex items-center justify-center text-slate-400">Carregando módulo...</div>
+              }>
+                {activeView === 'reports' && (
+                  <ReportsView 
+                    sessions={sessions} 
+                    updateSession={updateSession}
+                    removeSession={removeSession} 
+                  />
+                )}
 
-              {activeView === 'statistics' && (
-                <StatisticsView 
-                  members={members} 
-                  sessions={sessions} 
-                />
-              )}
+                {activeView === 'statistics' && (
+                  <StatisticsView 
+                    members={members} 
+                    sessions={sessions} 
+                  />
+                )}
 
-              {activeView === 'voting' && (
-                <VotingStation societyId="uph-society-id" />
-              )}
+                {activeView === 'voting' && (
+                  <VotingStation societyId="uph-society-id" />
+                )}
+
+                {activeView === 'treasury' && (
+                  <TreasuryView 
+                    transactions={transactions}
+                    addTransaction={addTransaction}
+                    addTransactionsBatch={addTransactionsBatch}
+                    removeTransaction={removeTransaction}
+                  />
+                )}
+              </Suspense>
 
 
             </motion.div>

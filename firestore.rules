@@ -6,9 +6,17 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Helpers
+    // Auth Helpers
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function isVoter() {
+      return isSignedIn() && request.auth.token.firebase.sign_in_provider == 'anonymous';
     }
 
     function isValidId(id) {
@@ -23,15 +31,15 @@ service cloud.firestore {
       return resource.data;
     }
 
-    // 1. Members
+    // 1. Members (Admins mutate; all signed in can read directory)
     match /members/{memberId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && incoming().keys().hasAll(['name', 'createdAt']) && isValidMember(incoming()) && isValidId(memberId);
-      allow update: if isSignedIn() && isValidMember(incoming()) && (
+      allow create: if isAdmin() && incoming().keys().hasAll(['name', 'createdAt']) && isValidMember(incoming()) && isValidId(memberId);
+      allow update: if isAdmin() && isValidMember(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'cargo', 'pinCode', 'uphEntryDate'])
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     function isValidMember(data) {
@@ -42,13 +50,20 @@ service cloud.firestore {
         && (!('createdAt' in data) || data.createdAt == null || data.createdAt is number || data.createdAt is timestamp);
     }
 
-    // 2. Attendance Sessions
+    // 2. Voter PINs Lookup (Safe hashed verification without list capability)
+    match /voterPins/{pinHash} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin(); // Voters cannot list/enumerate PINs
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 3. Attendance Sessions (Admins can create, update and delete. Rectifications allowed!)
     match /attendanceSessions/{sessionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && incoming().keys().hasAll(['date', 'records', 'type']) && isValidSession(incoming()) && isValidId(sessionId);
-      allow update: if false; // Sessions are immutable
-      allow delete: if isSignedIn();
+      allow create: if isAdmin() && incoming().keys().hasAll(['date', 'records', 'type']) && isValidSession(incoming()) && isValidId(sessionId);
+      allow update: if isAdmin() && isValidSession(incoming());
+      allow delete: if isAdmin();
     }
 
     function isValidSession(data) {
@@ -64,30 +79,44 @@ service cloud.firestore {
         && (!('status' in record) || record.status in ['presente', 'ausente', 'falta_justificada']);
     }
     
-    // 3. Societies
+    // 4. Societies
     match /societies/{societyId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && incoming().keys().hasAll(['name']) && isValidSociety(incoming()) && isValidId(societyId);
-      allow update: if isSignedIn() && isValidSociety(incoming()) && (
+      allow create: if isAdmin() && incoming().keys().hasAll(['name']) && isValidSociety(incoming()) && isValidId(societyId);
+      allow update: if isAdmin() && isValidSociety(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly(['name'])
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     function isValidSociety(data) {
       return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100));
     }
 
-    // 4. Elections
+    // 5. Elections & Secret Ballots
     match /elections/{electionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSignedIn() && incoming().keys().hasAll(['name', 'currentRole', 'currentBallot', 'votes', 'quorumRequired', 'presentCount']) && isValidElection(incoming()) && isValidId(electionId);
+      allow create: if isAdmin() && incoming().keys().hasAll(['name', 'currentRole', 'currentBallot', 'quorumRequired', 'presentCount']) && isValidElection(incoming()) && isValidId(electionId);
       allow update: if isSignedIn() && isValidElection(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['currentRole', 'currentBallot', 'votes', 'archived', 'candidatesIds', 'presentCount', 'quorumRequired', 'declinedMembers', 'registeredCandidates'])
+        incoming().diff(existing()).affectedKeys().hasOnly(['currentRole', 'currentBallot', 'votes', 'archived', 'candidatesIds', 'presentCount', 'quorumRequired', 'declinedMembers', 'registeredCandidates', 'ballotsCount', 'votedCount'])
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
+
+      // Subcollection: Registered Voters (Tracks who voted - no candidate info)
+      match /voters/{voterId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isAdmin();
+      }
+
+      // Subcollection: Anonymous Ballots (Secret votes - no voter ID info)
+      match /ballots/{ballotId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isAdmin();
+      }
     }
 
     function isValidElection(data) {
@@ -102,14 +131,15 @@ service cloud.firestore {
         && (!('registeredCandidates' in data) || (data.registeredCandidates is list))
         && (!('sessionId' in data) || (data.sessionId is string));
     }
-    // 5. Treasury Transactions
+
+    // 6. Treasury Transactions (Only Admins can mutate)
     match /treasuryTransactions/{transactionId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && incoming().keys().hasAll(['date', 'description', 'type', 'amount', 'createdAt']) && isValidTreasuryTransaction(incoming()) && isValidId(transactionId);
-      allow update: if isSignedIn() && isValidTreasuryTransaction(incoming()) && (
+      allow create: if isAdmin() && incoming().keys().hasAll(['date', 'description', 'type', 'amount', 'createdAt']) && isValidTreasuryTransaction(incoming()) && isValidId(transactionId);
+      allow update: if isAdmin() && isValidTreasuryTransaction(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly(['date', 'description', 'type', 'amount', 'category', 'sheetName'])
       );
-      allow delete: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     function isValidTreasuryTransaction(data) {
