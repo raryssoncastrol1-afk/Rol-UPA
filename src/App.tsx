@@ -301,7 +301,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen w-full bg-[#F6F4EF] dark:bg-[#111614] font-sans text-[#1B2E24] dark:text-[#EDEDE8] overflow-hidden transition-colors duration-200">
       <Sidebar 
         activeView={activeView} 
         setActiveView={setActiveView} 

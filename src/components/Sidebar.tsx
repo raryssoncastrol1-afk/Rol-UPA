@@ -12,10 +12,10 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, navItems, user, onLogout }) => {
   return (
-    <aside className="w-72 bg-[#0c2415] flex flex-col shadow-xl z-20 hidden md:flex border-r border-[#194629] relative overflow-hidden">
+    <aside className="w-72 bg-[#111614] flex flex-col shadow-xl z-20 hidden md:flex border-r border-[#2A3A31] relative overflow-hidden">
       <div className="p-8 relative z-10">
         <div className="flex items-center gap-3.5 mb-10">
-          <div className="w-10 h-10 bg-white border border-[#235334] rounded-xl flex items-center justify-center p-1 shadow-xs shrink-0 overflow-hidden">
+          <div className="w-11 h-11 bg-white border border-[#2A3A31] rounded-2xl flex items-center justify-center p-1.5 shadow-xs shrink-0 overflow-hidden">
             <img 
               src="/uph-logo-oficial.jpg" 
               alt="Logo UPH" 
@@ -27,8 +27,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, nav
             />
           </div>
           <div>
-            <h1 className="text-white font-bold text-lg tracking-tight leading-tight">UPH 3ª IPBV</h1>
-            <p className="text-[11px] text-[#86a892] font-medium">Gestão & Eleições</p>
+            <h1 className="text-[#EDEDE8] font-serif font-bold text-lg tracking-wide leading-tight">UPH 3ª IPBV</h1>
+            <p className="text-[10px] uppercase tracking-wider text-[#8A968F] font-semibold">Gestão & Eleições</p>
           </div>
         </div>
         
@@ -41,12 +41,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, nav
                 onClick={() => setActiveView(item.id)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden relative group ${
                   isActive
-                  ? 'text-white font-bold bg-[#174627] border border-[#2d7343] shadow-xs' 
-                  : 'text-[#86a892] hover:text-white hover:bg-[#12361f]'
+                  ? 'text-[#FAF8F5] font-semibold bg-[#18221D] border border-[#2A3A31] shadow-2xs' 
+                  : 'text-[#8A968F] hover:text-[#EDEDE8] hover:bg-[#18221D]/50'
                 }`}
               >
-                <item.icon className={`w-4 h-4 relative z-10 transition-transform duration-200 ${isActive ? 'text-[#c59b27] scale-105' : 'text-[#86a892] group-hover:scale-105'}`} />
-                <span className={`text-xs relative z-10`}>{item.label}</span>
+                <item.icon className={`w-4 h-4 relative z-10 transition-transform duration-200 ${isActive ? 'text-[#C8A96E] scale-105' : 'text-[#8A968F] group-hover:scale-105'}`} />
+                <span className="text-xs relative z-10 font-medium">{item.label}</span>
               </button>
             )
           })}
@@ -54,14 +54,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, nav
       </div>
       
       <div className="mt-auto p-8 relative z-10">
-        <div className="bg-[#072b14] p-3.5 rounded-xl border border-[#1e4e2e] mb-3">
-          <p className="text-[10px] text-[#86a892] uppercase font-semibold tracking-wider mb-0.5">Operador Atual</p>
-          <p className="text-sm text-white font-medium truncate">{user?.name || 'Administrador'}</p>
+        <div className="bg-[#18221D] p-3.5 rounded-xl border border-[#2A3A31] mb-3">
+          <p className="text-[9px] text-[#8A968F] uppercase font-semibold tracking-wider mb-0.5">Operador Atual</p>
+          <p className="text-sm text-[#EDEDE8] font-medium truncate">{user?.name || 'Administrador'}</p>
         </div>
         <button 
           onClick={onLogout}
           aria-label="Finalizar Sessão"
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-rose-300 hover:text-white hover:bg-rose-900/60 rounded-xl transition-all cursor-pointer text-xs font-semibold border border-rose-900/40"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-rose-300 hover:text-white hover:bg-rose-950/60 rounded-xl transition-all cursor-pointer text-xs font-semibold border border-rose-900/40"
         >
           <LogOut className="w-4 h-4" /> Finalizar Sessão
         </button>
