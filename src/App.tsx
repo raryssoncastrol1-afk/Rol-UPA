@@ -43,6 +43,26 @@ export default function App() {
     return localStorage.getItem('uph_voter_member_id');
   });
 
+  // Global Theme
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('uph_theme_mode');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('uph_theme_mode', theme);
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
+
   const { members, addMember, removeMember, updateMember } = useMembers();
   const { sessions, addSession, updateSession, removeSession } = useSessions();
   const { 
@@ -281,7 +301,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F8FAFC] font-sans text-slate-800 overflow-hidden">
+    <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 overflow-hidden transition-colors duration-200">
       <Sidebar 
         activeView={activeView} 
         setActiveView={setActiveView} 
@@ -299,6 +319,8 @@ export default function App() {
           canSaveAttendance={members.length > 0}
           isAttendanceStarted={isAttendanceStarted}
           onLogout={handleLogout}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         <div className="flex-1 overflow-y-auto">

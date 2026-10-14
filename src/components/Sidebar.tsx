@@ -15,8 +15,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, nav
     <aside className="w-72 bg-[#0c2415] flex flex-col shadow-xl z-20 hidden md:flex border-r border-[#194629] relative overflow-hidden">
       <div className="p-8 relative z-10">
         <div className="flex items-center gap-3.5 mb-10">
-          <div className="w-10 h-10 bg-[#072b14] border border-[#235334] rounded-xl flex items-center justify-center text-[#c59b27] shadow-sm shrink-0">
-            <ClipboardCheck className="w-5 h-5" />
+          <div className="w-10 h-10 bg-white border border-[#235334] rounded-xl flex items-center justify-center p-1 shadow-xs shrink-0 overflow-hidden">
+            <img 
+              src="/uph-logo-oficial.jpg" 
+              alt="Logo UPH" 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                // Fallback caso a imagem não carregue
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
           </div>
           <div>
             <h1 className="text-white font-bold text-lg tracking-tight leading-tight">UPH 3ª IPBV</h1>
