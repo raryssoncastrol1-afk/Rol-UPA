@@ -23,9 +23,9 @@ export const ROLES_LIST: Role[] = [
 export function getElectedMemberIds(
   votes: Vote[],
   presentCount: number,
-  currentRole: Role
+  currentRole: Role,
+  manualWinners?: Partial<Record<Role, { memberId: string }>>
 ): string[] {
-  if (!votes || votes.length === 0) return [];
   const electedIds: string[] = [];
   const majorityRequired = Math.floor(presentCount / 2) + 1;
 
@@ -33,6 +33,14 @@ export function getElectedMemberIds(
     // Não exclui o cargo ativo atual enquanto a confirmação estiver em andamento
     if (r === currentRole) return;
 
+    // 1. Verifica se houve vencedor manual / aclamação
+    if (manualWinners && manualWinners[r]?.memberId) {
+      electedIds.push(manualWinners[r]!.memberId);
+      return;
+    }
+
+    // 2. Verifica se houve vencedor via votos
+    if (!votes || votes.length === 0) return;
     for (let ballotNum = 1; ballotNum <= 3; ballotNum++) {
       const ballotVotes = votes.filter(v => v.role === r && v.ballotNumber === ballotNum);
       const voteCounts: Record<string, number> = {};
@@ -47,7 +55,7 @@ export function getElectedMemberIds(
     }
   });
 
-  return electedIds;
+  return Array.from(new Set(electedIds));
 }
 
 /**

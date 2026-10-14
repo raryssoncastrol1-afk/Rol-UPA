@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  updateDoc, 
-  doc, 
-  arrayUnion 
-} from 'firebase/firestore';
-import { db } from '../../firebase';
+import { localDB } from '../../lib/offlineDB';
 import { Member, Role, Vote, Election } from '../../types';
 import { Sparkles, Users, UserCheck, Play, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatMemberNameWithTitle } from '../../lib/memberUtils';
 
 interface VotingSimulatorProps {
   activeElection: Election;
@@ -64,8 +60,10 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
         timestamp: Date.now()
       };
 
-      await updateDoc(doc(db, 'elections', activeElection.id), {
-        votes: arrayUnion(newVote)
+      const currentElection = localDB.getElections().find(e => e.id === activeElection.id) || activeElection;
+      localDB.saveElection({
+        ...currentElection,
+        votes: [...(currentElection.votes || []), newVote]
       });
 
       setSelectedVoterId('');
@@ -130,8 +128,10 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
       });
 
       // Atomically update election with all votes
-      await updateDoc(doc(db, 'elections', activeElection.id), {
-        votes: arrayUnion(...simulatedVotes)
+      const currentElection = localDB.getElections().find(e => e.id === activeElection.id) || activeElection;
+      localDB.saveElection({
+        ...currentElection,
+        votes: [...(currentElection.votes || []), ...simulatedVotes]
       });
 
     } catch (err) {
@@ -242,7 +242,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
                     >
                       <option value="">Selecione o candidato favorito...</option>
                       {candidatesList.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{formatMemberNameWithTitle(c)}</option>
                       ))}
                     </select>
                   </div>
@@ -274,7 +274,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
                     >
                       <option value="">Selecione o sócio ausente/pendente...</option>
                       {pendingMembers.map(m => (
-                        <option key={m.id} value={m.id}>{m.name}</option>
+                        <option key={m.id} value={m.id}>{formatMemberNameWithTitle(m)}</option>
                       ))}
                     </select>
                   </div>
@@ -288,7 +288,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
                     >
                       <option value="">Selecione o candidato...</option>
                       {candidatesList.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{formatMemberNameWithTitle(c)}</option>
                       ))}
                     </select>
                   </div>

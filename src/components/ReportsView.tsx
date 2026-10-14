@@ -62,74 +62,81 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sessions.map(session => (
-            <div key={session.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group relative">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <p className="text-2xl font-black text-slate-900 leading-none">
-                    {format(session.date, "dd/MM", { locale: ptBR })}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-black uppercase mt-1 tracking-widest">
-                    {session.type === 'plenaria' ? `🏛️ Plenária (${session.callNumber || 1}ª Chamada)` : '📅 Programação'} • {format(session.date, "yyyy • HH:mm", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {updateSession && (
-                    <button
+          {sessions.map(session => {
+            const records = session.records || [];
+            const safeDate = session.date ? new Date(session.date) : new Date();
+            const isValidDate = !isNaN(safeDate.getTime());
+            return (
+              <div key={session.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group relative">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <p className="text-2xl font-black text-slate-900 leading-none">
+                      {isValidDate ? format(safeDate, "dd/MM", { locale: ptBR }) : '--/--'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase mt-1 tracking-widest">
+                      {session.type === 'plenaria' ? `🏛️ Plenária (${session.callNumber || 1}ª Chamada)` : '📅 Programação'} • {isValidDate ? format(safeDate, "yyyy • HH:mm", { locale: ptBR }) : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {updateSession && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          startEditing(session);
+                        }}
+                        className="text-slate-600 hover:text-indigo-700 hover:bg-slate-100 p-1.5 rounded-lg transition-all border border-slate-200 bg-white shadow-sm shrink-0 cursor-pointer"
+                        title="Retificar Presenças (Editar)"
+                        aria-label="Retificar Presenças"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        startEditing(session);
+                        setSessionToDelete(session.id);
                       }}
-                      className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-all border border-slate-100 bg-slate-50 shadow-sm shrink-0 cursor-pointer"
-                      title="Retificar Presenças (Editar)"
+                      className="text-slate-600 hover:text-rose-700 hover:bg-slate-100 p-1.5 rounded-lg transition-all border border-slate-200 bg-white shadow-sm shrink-0 cursor-pointer"
+                      title="Excluir Sessão"
+                      aria-label="Excluir Sessão"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                  )}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setSessionToDelete(session.id);
-                    }}
-                    className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-all border border-slate-100 bg-slate-50 shadow-sm shrink-0 cursor-pointer"
-                    title="Excluir Sessão"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3 mb-8 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                <div className="text-center">
-                  <p className="text-xl font-black text-emerald-500 leading-none">
-                    {session.records.filter(r => r.status === 'presente').length}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-black uppercase mt-1 tracking-tighter">Pres</p>
+                
+                <div className="grid grid-cols-3 gap-3 mb-8 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+                  <div className="text-center">
+                    <p className="text-xl font-black text-emerald-600 leading-none">
+                      {records.filter(r => r.status === 'presente').length}
+                    </p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-wider">Pres</p>
+                  </div>
+                  <div className="text-center border-x border-slate-200/60">
+                    <p className="text-xl font-black text-rose-600 leading-none">
+                      {records.filter(r => r.status === 'ausente').length}
+                    </p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-wider">Aus</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-black text-amber-600 leading-none">
+                      {records.filter(r => r.status === 'falta_justificada').length}
+                    </p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-wider">Just</p>
+                  </div>
                 </div>
-                <div className="text-center border-x border-slate-100">
-                  <p className="text-xl font-black text-rose-500 leading-none">
-                    {session.records.filter(r => r.status === 'ausente').length}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-black uppercase mt-1 tracking-tighter">Aus</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-black text-amber-500 leading-none">
-                    {session.records.filter(r => r.status === 'falta_justificada').length}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-black uppercase mt-1 tracking-tighter">Just</p>
-                </div>
-              </div>
 
-              <button 
-                onClick={() => generateReport(session)}
-                className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all group-hover:shadow-lg group-hover:shadow-indigo-600/10 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Download className="w-3 h-3" /> Baixar PDF
-              </button>
-            </div>
-          ))}
+                <button 
+                  onClick={() => generateReport(session)}
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" /> Baixar PDF
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -261,3 +268,5 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
     </div>
   );
 };
+
+export default ReportsView;

@@ -115,30 +115,27 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] py-12 px-6">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-xl w-full bg-white rounded-[3rem] p-10 md:p-16 border border-slate-200 shadow-2xl text-center relative overflow-hidden"
+          className="max-w-xl w-full bg-white rounded-2xl p-8 md:p-12 border border-slate-200 shadow-sm text-center relative overflow-hidden"
         >
-          {/* Decorative background element */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-50 rounded-full blur-3xl opacity-50" />
-          
           <div className="relative z-10">
-            <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-200 mx-auto mb-8 animate-bounce transition-all duration-1000">
-              <ClipboardCheck className="w-12 h-12 text-white" />
+            <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-md shadow-indigo-100 mx-auto mb-6 transition-transform hover:scale-105">
+              <ClipboardCheck className="w-10 h-10 text-white" />
             </div>
             
-            <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Iniciar Chamada Ativa</h2>
-            <p className="text-slate-500 font-medium mb-12 text-sm leading-relaxed px-4">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-3 tracking-tight">Iniciar Chamada Ativa</h2>
+            <p className="text-slate-500 font-medium mb-8 text-sm leading-relaxed px-4">
               Prepare-se para registrar a frequência dos membros. Escolha o tipo de evento e visualize o quórum em tempo real.
             </p>
             
             <button 
               onClick={() => setIsStarted(true)}
-              className="group w-full flex items-center justify-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white py-5 px-8 rounded-3xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-indigo-200 cursor-pointer"
+              className="group w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white py-4 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-indigo-200 cursor-pointer"
             >
-              <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
+              <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
               Nova Chamada do Dia
-              <Sparkles className="w-4 h-4 text-indigo-300" />
+              <Sparkles className="w-4 h-4 text-indigo-200" />
             </button>
             
             <div className="mt-8 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
@@ -169,21 +166,21 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
       {/* Status Bar */}
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 text-center md:text-left">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quórum Atual</p>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Quórum Atual</p>
             <p className="text-xl font-black text-slate-900 leading-none">{Math.round(totals.presencePercentage)}%</p>
           </div>
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 text-center md:text-left">
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Presentes</p>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
+            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Presentes</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{totals.presentCount}</p>
           </div>
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 text-center md:text-left">
-            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Total Sócios</p>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
+            <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Total Sócios</p>
             <p className="text-xl font-black text-rose-600 leading-none">{members.length}</p>
           </div>
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 text-center md:text-left">
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Status Quórum</p>
-            <p className={`text-[10px] font-black uppercase mt-1 ${sessionType === 'plenaria' ? (totals.metQuorum1st ? 'text-emerald-500' : totals.metQuorum2nd ? 'text-amber-500' : 'text-rose-500') : 'text-slate-400'}`}>
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
+            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Status Quórum</p>
+            <p className={`text-[10px] font-black uppercase mt-1 ${sessionType === 'plenaria' ? (totals.metQuorum1st ? 'text-emerald-600' : totals.metQuorum2nd ? 'text-amber-600' : 'text-rose-600') : 'text-slate-400'}`}>
               {sessionType === 'plenaria' 
                 ? (totals.metQuorum1st ? '1ª Chamada OK' : totals.metQuorum2nd ? '2ª Chamada OK' : 'Sem Quórum')
                 : 'Livre'}
@@ -296,51 +293,52 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         </motion.div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden flex flex-col">
-        <div className="bg-slate-50/50 border-b border-slate-100 grid grid-cols-12 px-6 md:px-8 py-4 text-[11px] font-black uppercase text-slate-400 tracking-tighter">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-slate-50/70 border-b border-slate-100 grid grid-cols-12 px-6 md:px-8 py-3.5 text-[11px] font-black uppercase text-slate-500 tracking-wider">
           <div className="col-span-5 md:col-span-5">Membro</div>
           <div className="col-span-2 hidden md:block">Status Atual</div>
           <div className="col-span-7 md:col-span-5 text-right">Registrar</div>
         </div>
         
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-100">
           {members.length === 0 ? (
             <div className="p-16 text-center text-slate-400 italic">
               Nenhum membro para realizar a chamada.
             </div>
           ) : (
             members.map((member, idx) => (
-              <div key={member.id} className={`grid grid-cols-12 px-6 md:px-8 py-4 items-center ${idx % 2 === 1 ? 'bg-slate-50/10' : ''}`}>
+              <div key={member.id} className={`grid grid-cols-12 px-6 md:px-8 py-3.5 items-center ${idx % 2 === 1 ? 'bg-slate-50/40' : ''}`}>
                 <div className="col-span-5 md:col-span-5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[10px] shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-[10px] shrink-0">
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex flex-col overflow-hidden">
-                    <span className="font-bold text-slate-700 text-sm leading-tight truncate">{member.name}</span>
+                    <span className="font-bold text-slate-800 text-sm leading-tight truncate">{member.name}</span>
                     {justifications[member.id] && (
-                      <span className="text-[9px] text-indigo-500 font-bold mt-0.5 truncate">Obs: {justifications[member.id]}</span>
+                      <span className="text-[9px] text-indigo-600 font-bold mt-0.5 truncate">Obs: {justifications[member.id]}</span>
                     )}
                   </div>
                 </div>
                 <div className="col-span-2 hidden md:block">
                   {!attendanceRecords[member.id] ? (
-                    <span className="text-[10px] text-slate-300 italic font-medium">Pendente</span>
+                    <span className="text-[10px] text-slate-400 italic font-medium">Pendente</span>
                   ) : (
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${
-                      attendanceRecords[member.id] === 'presente' ? 'text-emerald-500' :
-                      attendanceRecords[member.id] === 'ausente' ? 'text-rose-500' : 'text-amber-500'
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${
+                      attendanceRecords[member.id] === 'presente' ? 'text-emerald-700' :
+                      attendanceRecords[member.id] === 'ausente' ? 'text-rose-700' : 'text-amber-700'
                     }`}>
                       {attendanceRecords[member.id].replace('_', ' ')}
                     </span>
                   )}
                 </div>
-                <div className="col-span-7 md:col-span-5 flex justify-end gap-1 md:gap-2">
+                <div className="col-span-7 md:col-span-5 flex justify-end gap-1.5 md:gap-2">
                   <button 
                     onClick={() => setAttendanceRecords(prev => ({ ...prev, [member.id]: 'presente' }))}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2 rounded-2xl md:rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
+                    aria-label={`Marcar ${member.name} como presente`}
+                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
                       attendanceRecords[member.id] === 'presente' 
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 scale-110 md:scale-105' 
-                      : 'bg-white border border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 shadow-sm'
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
                     }`}
                   >
                     <span className="hidden sm:inline">Presente</span>
@@ -348,10 +346,11 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                   </button>
                   <button 
                     onClick={() => setAttendanceRecords(prev => ({ ...prev, [member.id]: 'ausente' }))}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2 rounded-2xl md:rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
+                    aria-label={`Marcar ${member.name} como ausente`}
+                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
                       attendanceRecords[member.id] === 'ausente' 
-                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-600/20 scale-110 md:scale-105' 
-                      : 'bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 shadow-sm'
+                      ? 'bg-rose-600 text-white shadow-sm' 
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
                     }`}
                   >
                     <span className="hidden sm:inline">Ausente</span>
@@ -363,10 +362,11 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       const text = prompt('Justificativa para ' + member.name);
                       if (text) setJustifications(prev => ({ ...prev, [member.id]: text }));
                     }}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2 rounded-2xl md:rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
+                    aria-label={`Justificar falta de ${member.name}`}
+                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
                       attendanceRecords[member.id] === 'falta_justificada' 
-                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-600/20 scale-110 md:scale-105' 
-                      : 'bg-white border border-slate-200 text-slate-400 hover:bg-amber-50 hover:text-amber-600 shadow-sm'
+                      ? 'bg-amber-600 text-white shadow-sm' 
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
                     }`}
                   >
                     <span className="hidden sm:inline">Justificar</span>

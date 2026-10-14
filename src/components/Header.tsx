@@ -57,19 +57,25 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="sm:hidden">Salvar</span>
           </button>
         )}
-        <div className="md:hidden flex bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
+        <div className="md:hidden flex items-center bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
            {navItems.filter(item => item.id !== 'statistics').map(item => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`p-2.5 rounded-xl transition-all ${activeView === item.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              aria-label={`Navegar para ${item.label}`}
+              className={`min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl transition-all ${
+                activeView === item.id 
+                ? 'bg-white text-indigo-600 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800'
+              }`}
             >
               <item.icon className="w-5 h-5" />
             </button>
           ))}
           <button
             onClick={onLogout}
-            className="p-2.5 rounded-xl text-rose-400 hover:bg-rose-50 transition-all"
+            aria-label="Sair do sistema"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-all"
             title="Sair"
           >
             <LogOut className="w-5 h-5" />

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { jsPDF } from 'jspdf';
+import { formatMemberNameWithTitle } from '../../lib/memberUtils';
 
 interface ElectionReportModalProps {
   election: Election;
@@ -48,31 +49,44 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
   const roleResults = ROLES_ORDER.map((role) => {
     const roleVotes = election.votes.filter((v) => v.role === role);
     
-    // Find absolute winner if any
+    // Find absolute winner if any (ou por deliberação manual / aclamação)
     let winnerId: string | null = null;
     let victoryBallot: number | null = null;
+    let manualReason: string | null = null;
 
-    // Ballots executed
-    const executedBallots = [1, 2, 3].filter((b) =>
-      roleVotes.some((v) => v.ballotNumber === b)
-    );
+    if (election.manualWinners?.[role]) {
+      winnerId = election.manualWinners[role]!.memberId;
+      manualReason = election.manualWinners[role]!.detail || 'Homologado por aclamação/deliberação da mesa';
+    } else {
+      // Identify election result through ballots
+      for (const b of [1, 2, 3]) {
+        const ballotVotes = roleVotes.filter((v) => v.ballotNumber === b);
+        if (ballotVotes.length === 0) continue;
 
-    // Identify election result
-    for (const b of [1, 2, 3]) {
-      const ballotVotes = roleVotes.filter((v) => v.ballotNumber === b);
-      const counts: Record<string, number> = {};
-      ballotVotes.forEach((v) => {
-        counts[v.candidateId] = (counts[v.candidateId] || 0) + 1;
-      });
+        const counts: Record<string, number> = {};
+        ballotVotes.forEach((v) => {
+          counts[v.candidateId] = (counts[v.candidateId] || 0) + 1;
+        });
 
-      const absoluteWinner = Object.entries(counts).find(
-        ([, count]) => count >= majorityRequired
-      );
+        if (b === 3) {
+          // No 3º escrutínio, a eleição é decidida por maioria relativa
+          const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          if (sorted.length > 0 && (sorted.length === 1 || sorted[0][1] > sorted[1][1])) {
+            winnerId = sorted[0][0];
+            victoryBallot = 3;
+            break;
+          }
+        } else {
+          const absoluteWinner = Object.entries(counts).find(
+            ([, count]) => count >= majorityRequired
+          );
 
-      if (absoluteWinner) {
-        winnerId = absoluteWinner[0];
-        victoryBallot = b;
-        break; // absolute winner found
+          if (absoluteWinner) {
+            winnerId = absoluteWinner[0];
+            victoryBallot = b;
+            break; // absolute winner found
+          }
+        }
       }
     }
 
@@ -99,7 +113,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
 
         return {
           id,
-          name: candidate?.name || 'Membro Não Localizado',
+          name: candidate ? formatMemberNameWithTitle(candidate) : 'Membro Não Localizado',
           ballotVotes,
         };
       })
@@ -112,11 +126,17 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
         return bLastVotes - aLastVotes;
       });
 
+    // Ballots executed
+    const executedBallots = [1, 2, 3].filter((b) =>
+      roleVotes.some((v) => v.ballotNumber === b)
+    );
+
     // Winner details
     const winnerDetails = winnerMember ? {
       id: winnerId!,
-      name: winnerMember.name,
-      victoryBallot: victoryBallot!,
+      name: formatMemberNameWithTitle(winnerMember),
+      victoryBallot: victoryBallot,
+      manualReason: manualReason,
       ballotVotes: executedBallots.map((ballotNum) => {
         const votesCount = roleVotes.filter(
           (v) => v.ballotNumber === ballotNum && v.candidateId === winnerId
@@ -131,7 +151,8 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
       executedBallots,
       winnerDetails,
       nonElectedList,
-      hasVotes: roleVotes.length > 0,
+      hasVotes: roleVotes.length > 0 || !!manualReason,
+      manualReason,
     };
   });
 
@@ -246,7 +267,10 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(6, 95, 70); // emerald-800
-          doc.text(`Eleito(a) no ${res.winnerDetails.victoryBallot}º Escrutínio por quórum regulamentar de maioria absoluta.`, margin + 5, y + 11);
+          const victoryType = res.winnerDetails.victoryBallot === 3
+            ? 'maioria relativa'
+            : 'quórum regulamentar de maioria absoluta';
+          doc.text(`Eleito(a) no ${res.winnerDetails.victoryBallot}º Escrutínio por ${victoryType}.`, margin + 5, y + 11);
 
           const ballotTexts = res.winnerDetails.ballotVotes.map((bv) => {
             const pt = presentCount > 0 ? ((bv.votesCount / presentCount) * 100).toFixed(1) : '0';
@@ -261,7 +285,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(180, 83, 9); // amber-700
-          doc.text('Nenhum candidato alcançou a maioria absoluta de votos para este cargo.', margin + 4, y);
+          doc.text('Nenhum candidato alcançou a votação regulamentar necessária para este cargo.', margin + 4, y);
           y += 8;
         }
 
@@ -345,7 +369,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
     let reportText = `📋 *RELATÓRIO OFICIAL DE ELEIÇÃO*\n`;
     reportText += `*Eleição:* ${election.name}\n`;
     reportText += `*Membros Presentes:* ${presentCount}\n`;
-    reportText += `*Quórum de Vitória (Maioria Absoluta):* ${majorityRequired} votos\n`;
+    reportText += `*Quórum de Vitória (Maioria Absoluta no 1º/2º escrutínio):* ${majorityRequired} votos\n`;
     reportText += `──────────────────────────\n\n`;
 
     roleResults.forEach((res) => {
@@ -356,14 +380,15 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
       }
 
       if (res.winnerDetails) {
+        const victoryType = res.winnerDetails.victoryBallot === 3 ? 'Maioria Relativa' : 'Maioria Absoluta';
         reportText += `✅ *ELEITO(A):* ${res.winnerDetails.name}\n`;
-        reportText += `   Eleito(a) no ${res.winnerDetails.victoryBallot}º Escrutínio\n`;
+        reportText += `   Eleito(a) no ${res.winnerDetails.victoryBallot}º Escrutínio por ${victoryType}\n`;
         res.winnerDetails.ballotVotes.forEach((bv) => {
           const percentage = presentCount > 0 ? ((bv.votesCount / presentCount) * 100).toFixed(1) : '0.0';
           reportText += `   • ${bv.ballotNum}º Escrutínio: ${bv.votesCount} votos (${percentage}%)\n`;
         });
       } else {
-        reportText += `❌ Nenhum candidato eleito por maioria absoluta.\n`;
+        reportText += `❌ Nenhum candidato eleito para este cargo.\n`;
       }
 
       if (res.nonElectedList.length > 0) {
@@ -458,12 +483,12 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
         }
       `}} />
 
-      <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Modal Top Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 no-print">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-[#003300]">
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-uph-green">
               <FileText className="w-5 h-5 text-emerald-700" />
             </div>
             <div>
@@ -501,7 +526,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
             </button>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-[#003300] text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition-colors flex items-center gap-1.5 shadow-sm shadow-emerald-950/20"
+              className="px-4 py-2 bg-uph-green hover:bg-uph-green-hover text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm shadow-emerald-950/20 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               Imprimir Relatório
@@ -572,9 +597,15 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
                             <Trophy className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                             <div>
                               <h4 className="font-extrabold text-emerald-950 text-base">{res.winnerDetails.name}</h4>
-                              <p className="text-emerald-700 text-xs font-bold leading-tight mt-0.5">
-                                Eleito(a) no {res.winnerDetails.victoryBallot}º Escrutínio por Maioria Absoluta.
-                              </p>
+                              {res.winnerDetails.manualReason ? (
+                                <p className="text-amber-800 text-xs font-bold leading-tight mt-0.5">
+                                  {res.winnerDetails.manualReason}
+                                </p>
+                              ) : (
+                                <p className="text-emerald-700 text-xs font-bold leading-tight mt-0.5">
+                                  Eleito(a) no {res.winnerDetails.victoryBallot}º Escrutínio por {res.winnerDetails.victoryBallot === 3 ? 'Maioria Relativa' : 'Maioria Absoluta'}.
+                                </p>
+                              )}
                             </div>
                           </div>
 
@@ -599,7 +630,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
                         </div>
                       ) : (
                         <div className="bg-amber-50/50 p-5 rounded-2xl border-2 border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-2">
-                          Não houve candidato eleito por maioria absoluta (quórum {majorityRequired} votos) neste cargo.
+                          Não houve candidato eleito por votação regulamentar neste cargo.
                         </div>
                       )}
                     </div>
@@ -641,6 +672,30 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
               </div>
             ))}
           </div>
+
+          {/* Seção de Resoluções e Ocorrências da Mesa */}
+          {election.overrideNotes && election.overrideNotes.length > 0 && (
+            <div className="mt-10 pt-8 border-t-2 border-slate-200 space-y-4">
+              <div className="flex items-center gap-2">
+                <Bookmark className="w-4 h-4 text-amber-600 shrink-0" />
+                <h4 className="font-black text-sm uppercase tracking-wider text-slate-900 font-sans">
+                  Resoluções e Ocorrências Extraordinárias da Mesa
+                </h4>
+              </div>
+              <div className="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-4 space-y-2">
+                {election.overrideNotes.map((note) => (
+                  <div key={note.id} className="text-xs text-slate-700 flex items-start gap-2 border-b border-amber-100 last:border-0 pb-2 last:pb-0">
+                    <span className="text-[10px] text-amber-700 font-mono font-bold shrink-0 mt-0.5">
+                      [{new Date(note.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}]
+                    </span>
+                    <span>
+                      <strong className="text-slate-900">{ROLE_LABELS[note.role]}:</strong> {note.description}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Footer Signature Field */}
           <div className="pt-16 mt-16 border-t border-dashed border-slate-200">

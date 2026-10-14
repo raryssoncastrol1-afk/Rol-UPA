@@ -10,21 +10,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useMembers, useSessions, useTreasury } from './hooks/useData';
-import { AttendanceStatus, AttendanceRecord, Member, SessionType } from './types';
-import { auth, db } from './firebase';
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  User, 
-  signInAnonymously,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { hashPin } from './lib/cryptoUtils';
+import { AttendanceStatus, AttendanceRecord, Member, SessionType, AppUser } from './types';
+import { localDB } from './lib/offlineDB';
 
 // Components
 import { Sidebar } from './components/Sidebar';
@@ -44,13 +31,13 @@ const TreasuryView = lazy(() => import('./components/TreasuryView').then(m => ({
 type View = 'dashboard' | 'members' | 'attendance' | 'reports' | 'statistics' | 'voting' | 'treasury';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AppUser | null>(() => localDB.getCurrentUser());
+  const [loading, setLoading] = useState(false);
   const [activeView, setActiveView] = useState<View>('dashboard');
   
   // App Roles
   const [appRole, setAppRole] = useState<'admin' | 'voter' | null>(() => {
-    return localStorage.getItem('uph_app_role') as 'admin' | 'voter' | null;
+    return (localStorage.getItem('uph_app_role') as 'admin' | 'voter' | null) || (localDB.getCurrentUser()?.role ?? null);
   });
   const [voterMemberId, setVoterMemberId] = useState<string | null>(() => {
     return localStorage.getItem('uph_voter_member_id');
@@ -101,137 +88,57 @@ export default function App() {
     else localStorage.removeItem('uph_voter_member_id');
   }, [attendanceRecords, justifications, sessionType, plenaryCall, isAttendanceStarted, appRole, voterMemberId]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      if (u) {
-        if (u.isAnonymous) {
-          setAppRole('voter');
-        } else {
-          setAppRole('admin');
-        }
-      } else {
-        setAppRole(null);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleAdminLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
+  const handleAdminLogin = (password: string): boolean => {
+    const savedPassword = localStorage.getItem('uph_admin_password') || 'admin';
+    if (password === savedPassword) {
+      const adminUser: AppUser = {
+        id: 'admin-local',
+        name: 'Administrador Local',
+        role: 'admin'
+      };
+      localDB.setCurrentUser(adminUser);
+      setUser(adminUser);
       setAppRole('admin');
-    } catch (error) {
-      console.error("Erro ao fazer login admin:", error);
+      localStorage.setItem('uph_app_role', 'admin');
+      return true;
     }
+    return false;
   };
 
-  const handleEmailLogin = async (email: string, pass: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      setAppRole('admin');
-    } catch (error: any) {
-      console.error("Erro ao fazer login admin com email:", error);
-      if (error?.code === 'auth/operation-not-allowed') {
-         alert('O provedor de login "E-mail e Senha" precisa ser ativado no console do seu Firebase! Vá em Authentication > Sign-in method > Adicionar Provedor > E-mail/Senha e ative-o.');
-      } else if (error?.code === 'auth/invalid-credential' || error?.code === 'auth/user-not-found' || error?.code === 'auth/wrong-password') {
-         alert('E-mail ou senha incorretos. Verifique suas credenciais e tente novamente.');
-      } else {
-         alert('Erro ao entrar: ' + error.message);
-      }
+  const handleVoterLogin = async (pin: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanPin = pin.trim();
+    const result = await syncClient.authenticateVoter(cleanPin);
+
+    if (result.success && result.voter) {
+      const voterUser: AppUser = {
+        id: result.voter.id,
+        name: result.voter.name,
+        role: 'voter'
+      };
+      localDB.setCurrentUser(voterUser);
+      setUser(voterUser);
+      setVoterMemberId(result.voter.id);
+      setAppRole('voter');
+      localStorage.setItem('uph_voter_member_id', result.voter.id);
+      localStorage.setItem('uph_app_role', 'voter');
+      return { success: true };
     }
+
+    return { 
+      success: false, 
+      error: result.error || 'PIN inválido ou membro não encontrado.' 
+    };
   };
 
-  const handleEmailRegister = async (email: string, pass: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-      setAppRole('admin');
-    } catch (error: any) {
-      console.error("Erro ao registrar admin por email:", error);
-      if (error?.code === 'auth/operation-not-allowed') {
-         alert('O provedor de login "E-mail e Senha" precisa ser ativado no console do seu Firebase! Vá em Authentication > Sign-in method > Adicionar Provedor > E-mail/Senha e ative-o.');
-      } else if (error?.code === 'auth/email-already-in-use') {
-         alert('Este e-mail de administrador já está cadastrado. Tente entrar usando a opção correspondente.');
-      } else if (error?.code === 'auth/weak-password') {
-         alert('A senha informada é muito fraca. Ela deve conter pelo menos 6 caracteres.');
-      } else {
-         alert('Erro ao registrar administrador: ' + error.message);
-      }
-    }
-  };
-
-  const handlePasswordReset = async (email: string) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-      alert('E-mail de recuperação de senha enviado com sucesso! Verifique sua caixa de entrada e a pasta de spam.');
-    } catch (error: any) {
-      console.error("Erro ao enviar recuperação de senha:", error);
-      if (error?.code === 'auth/user-not-found') {
-        alert('Nenhum usuário administrador cadastrado com este e-mail.');
-      } else if (error?.code === 'auth/invalid-email') {
-        alert('Formato de e-mail inválido.');
-      } else {
-        alert('Erro ao enviar recuperação de senha: ' + error.message);
-      }
-    }
-  };
-
-  const handleVoterLogin = async (pin: string) => {
-    try {
-      const cleanPin = pin.trim();
-      await signInAnonymously(auth);
-      
-      // 1. Try secure hashed PIN lookup first
-      const pinHash = await hashPin(cleanPin);
-      const pinDocSnap = await getDoc(doc(db, 'voterPins', pinHash));
-      
-      if (pinDocSnap.exists()) {
-        const pinData = pinDocSnap.data();
-        setVoterMemberId(pinData.memberId);
-        setAppRole('voter');
-        return;
-      }
-
-      // 2. Fallback to direct member lookup for legacy pins not yet migrated
-      try {
-        const q = query(collection(db, 'members'), where('pinCode', '==', cleanPin));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const matchedMember = querySnapshot.docs[0];
-          setVoterMemberId(matchedMember.id);
-          setAppRole('voter');
-          return;
-        }
-      } catch (fallbackErr) {
-        console.warn('Fallback member PIN query restricted by rules:', fallbackErr);
-      }
-
-      // If neither lookup found the member
-      await signOut(auth);
-      alert('PIN inválido ou membro não encontrado. Verifique o código e tente novamente.');
-    } catch (error: any) {
-      console.error("Erro ao fazer login anonimo:", error);
-      if (error?.code === 'auth/admin-restricted-operation') {
-         alert('Para usar o login de eleitor simulado, é necessário ativar o provedor "Anônimo" (Anonymous) no Firebase Console em Authentication > Sign-in method.');
-      } else {
-         alert('Erro ao autenticar eleitor: ' + error.message);
-      }
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setAppRole(null);
-      setVoterMemberId(null);
-      localStorage.removeItem('uph_app_role');
-      localStorage.removeItem('uph_voter_member_id');
-    } catch (error) {
-      console.error("Erro ao sair:", error);
-    }
+  const handleLogout = () => {
+    // Sanitização e purga 100% dos dados da sessão do eleitor
+    localDB.setCurrentUser(null);
+    setUser(null);
+    setAppRole(null);
+    setVoterMemberId(null);
+    localStorage.removeItem('uph_auth_user');
+    localStorage.removeItem('uph_app_role');
+    localStorage.removeItem('uph_voter_member_id');
   };
 
   const stats = useMemo(() => {
@@ -320,11 +227,8 @@ export default function App() {
   if (!user || !appRole) {
     return (
       <LoginScreen 
-        onGoogleLogin={handleAdminLogin}
+        onAdminLogin={handleAdminLogin}
         onVoterLogin={handleVoterLogin}
-        onEmailLogin={handleEmailLogin}
-        onEmailRegister={handleEmailRegister}
-        onPasswordReset={handlePasswordReset}
       />
     );
   }
