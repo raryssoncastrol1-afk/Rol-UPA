@@ -219,7 +219,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
   };
 
   // Add Member
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const trimmedName = newMemberName.trim();
     if (!trimmedName) return;
 
@@ -248,20 +248,26 @@ export const MembersView: React.FC<MembersViewProps> = ({
       dizimista: newDizimista
     };
 
-    addMember(finalName, finalCargo, newMemberEntryDate, extra);
+    try {
+      await addMember(finalName, finalCargo, newMemberEntryDate, extra);
 
-    // Reset Form
-    setNewMemberName('');
-    setNewMemberModality('Não se aplica');
-    setNewMemberCargo('');
-    setNewMemberEntryDate('');
-    setNewContato('');
-    setNewEmail('');
-    setNewNascimento('');
-    setNewCpf('');
-    setNewSituacao('Em Plena Comunhão');
-    setNewDizimista(false);
-    setShowExtendedAdd(false);
+      // Reset Form
+      setNewMemberName('');
+      setNewMemberModality('Não se aplica');
+      setNewMemberCargo('');
+      setNewMemberEntryDate('');
+      setNewContato('');
+      setNewEmail('');
+      setNewNascimento('');
+      setNewCpf('');
+      setNewSituacao('Em Plena Comunhão');
+      setNewDizimista(false);
+      setShowExtendedAdd(false);
+    } catch (err) {
+      console.error('Erro ao adicionar membro:', err);
+      const msg = err instanceof Error ? err.message : 'Verifique a conexão com o servidor.';
+      alert(`Falha ao adicionar membro: ${msg}`);
+    }
   };
 
   // Filtered members list

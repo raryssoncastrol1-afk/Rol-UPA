@@ -4,8 +4,9 @@
 @theme {
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-uph-green: #003300;
-  --color-uph-green-hover: #004d00;
+  --color-uph-green: #0a3d1c;
+  --color-uph-green-hover: #072b14;
+  --color-uph-gold: #c59b27;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -17,10 +18,10 @@
   }
 }
 
-/* Browser surface theming (Impeccable craft floor) */
+/* Browser surface theming com verde institucional */
 ::selection {
-  background-color: #e0e7ff;
-  color: #312e81;
+  background-color: #d1fae5;
+  color: #064e3b;
 }
 
 /* Smooth custom scrollbars */

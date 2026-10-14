@@ -55,16 +55,13 @@ export const syncClient = {
   },
 
   async pushElection(election: Election): Promise<void> {
+    const res = await fetch('/api/elections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(election)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar eleição no servidor.');
     localDB.saveElection(election);
-    try {
-      await fetch('/api/elections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(election)
-      });
-    } catch {
-      // offline: mantido no localDB
-    }
   },
 
   async castVote(electionId: string, vote: Vote): Promise<{ success: boolean; error?: string }> {
@@ -101,10 +98,9 @@ export const syncClient = {
   },
 
   async deleteElection(id: string): Promise<void> {
+    const res = await fetch(`/api/elections/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Falha ao excluir eleição no servidor.');
     localDB.deleteElection(id);
-    try {
-      await fetch(`/api/elections/${id}`, { method: 'DELETE' });
-    } catch {}
   },
 
   // --- MEMBROS ---
@@ -124,32 +120,29 @@ export const syncClient = {
   },
 
   async pushMember(member: Member): Promise<void> {
+    const res = await fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(member)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar membro no servidor.');
     localDB.saveMember(member);
-    try {
-      await fetch('/api/members', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(member)
-      });
-    } catch {}
   },
 
   async pushMembersBatch(members: Member[]): Promise<void> {
+    const res = await fetch('/api/members/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(members)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar lote de membros no servidor.');
     localDB.saveMembersBatch(members);
-    try {
-      await fetch('/api/members/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(members)
-      });
-    } catch {}
   },
 
   async deleteMember(id: string): Promise<void> {
+    const res = await fetch(`/api/members/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Falha ao excluir membro no servidor.');
     localDB.deleteMember(id);
-    try {
-      await fetch(`/api/members/${id}`, { method: 'DELETE' });
-    } catch {}
   },
 
   // --- SESSÕES ---
@@ -168,21 +161,19 @@ export const syncClient = {
   },
 
   async pushSession(session: AttendanceSession): Promise<void> {
+    const res = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar sessão no servidor.');
     localDB.saveSession(session);
-    try {
-      await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(session)
-      });
-    } catch {}
   },
 
   async deleteSession(id: string): Promise<void> {
+    const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Falha ao excluir sessão no servidor.');
     localDB.deleteSession(id);
-    try {
-      await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-    } catch {}
   },
 
   // --- TESOURARIA ---
@@ -201,20 +192,18 @@ export const syncClient = {
   },
 
   async pushTransaction(tx: TreasuryTransaction): Promise<void> {
+    const res = await fetch('/api/treasury', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tx)
+    });
+    if (!res.ok) throw new Error('Falha ao salvar transação no servidor.');
     localDB.saveTransaction(tx);
-    try {
-      await fetch('/api/treasury', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tx)
-      });
-    } catch {}
   },
 
   async deleteTransaction(id: string): Promise<void> {
+    const res = await fetch(`/api/treasury/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Falha ao excluir transação no servidor.');
     localDB.deleteTransaction(id);
-    try {
-      await fetch(`/api/treasury/${id}`, { method: 'DELETE' });
-    } catch {}
   }
 };

@@ -182,17 +182,23 @@ export default function App() {
       justification: justifications[m.id] || ''
     }));
 
-    await addSession({
-      date: Date.now(),
-      type: sessionType,
-      records,
-      ...(sessionType === 'plenaria' ? { callNumber: plenaryCall } : {})
-    });
+    try {
+      await addSession({
+        date: Date.now(),
+        type: sessionType,
+        records,
+        ...(sessionType === 'plenaria' ? { callNumber: plenaryCall } : {})
+      });
 
-    setAttendanceRecords({});
-    setJustifications({});
-    setIsAttendanceStarted(false);
-    setActiveView('reports');
+      setAttendanceRecords({});
+      setJustifications({});
+      setIsAttendanceStarted(false);
+      setActiveView('reports');
+    } catch (err) {
+      console.error('Erro ao salvar chamada:', err);
+      const msg = err instanceof Error ? err.message : 'Verifique a conexão com o servidor.';
+      alert(`Falha ao registrar chamada: ${msg}`);
+    }
   }, [members, attendanceRecords, justifications, sessionType, plenaryCall, addSession]);
 
   const navItems = [
@@ -207,17 +213,17 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-900 border-indigo-500 border-t-4">
+      <div className="h-screen w-full flex items-center justify-center bg-[#0d1f14] border-t-4 border-[#c59b27]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <div className="w-16 h-16 rounded-[2rem] flex items-center justify-center border-2 border-indigo-500/30">
-              <ClipboardCheck className="w-8 h-8 text-indigo-500" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center border border-[#174627] bg-[#102919]">
+              <ClipboardCheck className="w-8 h-8 text-[#c59b27]" />
             </div>
-            <div className="absolute inset-0 border-2 border-indigo-500 rounded-[2rem] border-t-transparent animate-spin" />
+            <div className="absolute inset-0 border-2 border-[#c59b27] rounded-2xl border-t-transparent animate-spin" />
           </div>
           <div className="text-center">
-            <h2 className="text-white font-display text-xl font-bold tracking-tight mb-2">Inicializando</h2>
-            <p className="text-indigo-400 font-mono text-[10px] uppercase tracking-widest animate-pulse">Estabelecendo Conexão Secura</p>
+            <h2 className="text-white font-display text-lg font-bold tracking-tight mb-1">UPH - Rol de Membros</h2>
+            <p className="text-[#a4c9ad] font-mono text-[10px] uppercase tracking-widest animate-pulse">Conectando ao sistema...</p>
           </div>
         </div>
       </div>
@@ -237,34 +243,34 @@ export default function App() {
   if (appRole === 'voter') {
     if (!voterMemberId) {
       return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#F8FAFC] space-y-4">
-           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-           <p className="text-slate-500 font-bold">Validando credenciais do eleitor...</p>
-           <button onClick={handleLogout} className="text-sm font-medium text-indigo-500 hover:text-indigo-700">Cancelar</button>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#f8faf9] space-y-4">
+           <div className="w-10 h-10 border-3 border-[#0a3d1c] border-t-transparent rounded-full animate-spin" />
+           <p className="text-[#0a3d1c] font-semibold text-sm">Validando credenciais do eleitor...</p>
+           <button onClick={handleLogout} className="text-xs font-medium text-slate-500 hover:text-slate-800">Cancelar</button>
         </div>
       );
     }
 
     return (
-      <div className="flex h-screen w-full bg-[#F8FAFC] font-sans text-slate-800 overflow-hidden">
-        <div className="flex-1 flex flex-col items-center max-w-lg mx-auto bg-white shadow-xl shadow-slate-200/50">
-          <header className="w-full px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-white sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <Gavel className="w-4 h-4 text-indigo-600" />
+      <div className="flex h-screen w-full bg-[#f1f5f3] font-sans text-slate-800 overflow-hidden">
+        <div className="flex-1 flex flex-col items-center max-w-lg mx-auto bg-white shadow-lg border-x border-slate-200/80">
+          <header className="w-full px-5 py-3.5 flex items-center justify-between border-b border-slate-200/80 bg-[#0a3d1c] text-white sticky top-0 z-10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 bg-[#134e27] border border-[#236b39] rounded-lg flex items-center justify-center text-[#c59b27]">
+                <Gavel className="w-3.5 h-3.5" />
               </div>
-              <h1 className="font-bold text-slate-800">Painel do Eleitor</h1>
+              <h1 className="font-bold text-sm tracking-tight text-white">UPH • Cabine de Votação</h1>
             </div>
             <button 
               onClick={handleLogout}
-              className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+              className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#134e27] text-slate-200 hover:text-white hover:bg-[#1a5f31] border border-[#236b39] transition-colors cursor-pointer"
             >
               Sair
             </button>
           </header>
-          <main className="flex-1 w-full overflow-y-auto bg-slate-50">
+          <main className="flex-1 w-full overflow-y-auto bg-[#f8faf9]">
             <Suspense fallback={
-              <div className="p-8 text-center text-slate-400">Carregando painel de votação...</div>
+              <div className="p-8 text-center text-slate-400 text-sm">Carregando painel de votação...</div>
             }>
               <VotingStation societyId="uph-society-id" voterMemberId={voterMemberId} />
             </Suspense>

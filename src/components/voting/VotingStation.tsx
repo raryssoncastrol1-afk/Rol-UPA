@@ -1166,11 +1166,11 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                     <span>Incluir ausentes (com carta)</span>
                   </label>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
                   <select
                     value={selectedCandidateToAdd}
                     onChange={(e) => setSelectedCandidateToAdd(e.target.value)}
-                    className="flex-1 h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                   >
                     <option value="">Selecione o membro...</option>
                     {(activeElection.allowNonPresentCandidates ? members : presentMembers)
@@ -1186,9 +1186,10 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                   <button
                     onClick={() => handleAddCandidate(selectedCandidateToAdd)}
                     disabled={!selectedCandidateToAdd}
-                    className="h-10 px-4 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center whitespace-nowrap shrink-0"
+                    className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/20 cursor-pointer active:scale-[0.99]"
                   >
-                    Adicionar
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Adicionar Candidato</span>
                   </button>
                 </div>
               </div>
@@ -1421,41 +1422,41 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
     }
 
     return (
-      <div className="flex flex-col h-full bg-white">
-        <div className="px-6 py-8 bg-white border-b border-slate-100">
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
-            {greeting},<br />
-            <span className="text-indigo-600">{voter?.name}</span>
+      <div className="flex flex-col h-full bg-[#f8faf9]">
+        <div className="px-6 py-5 bg-white border-b border-slate-200/80">
+          <p className="text-xs font-medium text-slate-500 mb-0.5">{greeting},</p>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            {voter?.name}
           </h2>
         </div>
 
-        <div className="p-6 bg-slate-900 text-white shadow-xl">
+        <div className="p-5 bg-[#0a3d1c] text-white border-b border-[#134e27]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{name}</span>
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              URNA CONECTADA
+            <span className="text-[11px] text-[#86a892] font-semibold tracking-wider uppercase">{name}</span>
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#134e27] text-[#c59b27] border border-[#236b39] text-[10px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c59b27]"></span>
+              URNA OFICIAL
             </span>
           </div>
-          <h2 className="text-2xl font-display font-bold">Votação: {ROLE_NAMES[currentRole]}</h2>
-          <p className="opacity-70 mt-1">{currentBallot}º Escrutínio</p>
+          <h2 className="text-xl font-bold tracking-tight text-white">{ROLE_NAMES[currentRole]}</h2>
+          <p className="text-xs text-[#86a892] mt-0.5 font-medium">{currentBallot}º Escrutínio</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest pl-2 mb-4">Selecione seu candidato:</p>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 pb-24">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2">Selecione seu voto:</p>
           {candidatesList.sort(compareMembersByName).map(candidate => (
             <button
               key={candidate.id}
               onClick={() => {
                 setCandidateToConfirm(candidate);
               }}
-              className="w-full text-left p-4 bg-white border border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all flex items-center justify-between group active:scale-95"
+              className="w-full text-left p-4 bg-white border border-slate-200/90 rounded-xl hover:border-[#0a3d1c] hover:bg-[#f2f7f4] transition-all flex items-center justify-between group cursor-pointer shadow-xs active:scale-[0.99]"
             >
               <div>
-                <div className="font-bold text-slate-800 text-lg">{formatMemberNameWithTitle(candidate)}</div>
-                {candidate.cargo && <div className="text-xs text-slate-400">{candidate.cargo}</div>}
+                <div className="font-bold text-slate-800 text-base group-hover:text-[#0a3d1c] transition-colors">{formatMemberNameWithTitle(candidate)}</div>
+                {candidate.cargo && <div className="text-xs text-slate-500 mt-0.5">{candidate.cargo}</div>}
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#0a3d1c] transition-colors" />
             </button>
           ))}
         </div>
@@ -1468,51 +1469,52 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-[#0d1f14]/80 backdrop-blur-xs"
                 onClick={() => setCandidateToConfirm(null)}
               />
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.96, y: 12 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2rem] p-6 max-w-sm w-full border border-slate-100 shadow-2xl relative z-10 text-center space-y-5"
+                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                className="bg-white rounded-2xl p-6 max-w-sm w-full border border-slate-200 shadow-xl relative z-10 text-center space-y-4"
               >
-                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto">
-                  <Shield className="w-8 h-8" />
+                <div className="w-14 h-14 bg-[#f0fdf4] text-[#0a3d1c] border border-[#bbf7d0] rounded-xl flex items-center justify-center mx-auto">
+                  <Shield className="w-7 h-7" />
                 </div>
                 
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black text-slate-800 tracking-tight">Confirmar Voto?</h3>
-                  <p className="text-sm text-slate-500">
-                    Você está confirmando seu voto em:
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Confirmar Escolha</h3>
+                  <p className="text-xs text-slate-500">
+                    Você está depositando seu voto em:
                   </p>
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <p className="font-bold text-slate-800 text-base">{formatMemberNameWithTitle(candidateToConfirm)}</p>
-                    <p className="text-xs text-indigo-600 font-bold mt-1 uppercase tracking-wider">
+                  <div className="bg-[#f8faf9] p-3.5 rounded-xl border border-slate-200 text-left mt-2">
+                    <p className="font-bold text-slate-900 text-base">{formatMemberNameWithTitle(candidateToConfirm)}</p>
+                    <p className="text-xs text-[#0a3d1c] font-bold mt-1">
                       Cargo: {ROLE_NAMES[currentRole]}
                     </p>
                   </div>
                 </div>
 
                 {voteError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-bold text-center">
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium text-center">
                     {voteError}
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-2.5 pt-1">
                   <button
                     disabled={isSubmittingVote}
                     onClick={() => {
                       setCandidateToConfirm(null);
                       setVoteError(null);
                     }}
-                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all active:scale-95 disabled:opacity-50"
+                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all cursor-pointer disabled:opacity-50"
                   >
-                    Cancelar
+                    Voltar
                   </button>
                   <button
                     disabled={isSubmittingVote}
+                    className="flex-1 py-3 px-4 bg-[#0a3d1c] hover:bg-[#072b14] text-white font-bold rounded-xl text-sm transition-all cursor-pointer shadow-sm disabled:opacity-50"
                     onClick={async () => {
                       setIsSubmittingVote(true);
                       setVoteError(null);
@@ -1535,7 +1537,6 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                         setIsSubmittingVote(false);
                       }
                     }}
-                    className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm shadow-md shadow-indigo-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSubmittingVote ? (
                       <>

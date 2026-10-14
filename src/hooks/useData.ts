@@ -48,14 +48,12 @@ export function useMembers() {
       ...extraFields
     };
 
-    localDB.saveMember(newMember);
     await syncClient.pushMember(newMember);
     refresh();
     return newMember.id;
   };
 
   const removeMember = async (id: string) => {
-    localDB.deleteMember(id);
     await syncClient.deleteMember(id);
     refresh();
   };
@@ -64,7 +62,6 @@ export function useMembers() {
     const current = localDB.getMembers().find(m => m.id === id);
     if (!current) return;
     const updated: Member = { ...current, ...updates };
-    localDB.saveMember(updated);
     await syncClient.pushMember(updated);
     refresh();
   };
@@ -95,7 +92,6 @@ export function useMembers() {
       };
     });
 
-    localDB.saveMembersBatch(newMembers);
     await syncClient.pushMembersBatch(newMembers);
     refresh();
   };
@@ -115,6 +111,7 @@ export function useSessions() {
   useEffect(() => {
     const handleUpdate = () => refresh();
     dbEvents.addEventListener('uph_db_sessions', handleUpdate);
+    syncClient.fetchSessions().then(() => refresh());
     return () => dbEvents.removeEventListener('uph_db_sessions', handleUpdate);
   }, [refresh]);
 
@@ -124,7 +121,7 @@ export function useSessions() {
       id: `ses-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       createdAt: Date.now()
     };
-    localDB.saveSession(newSession);
+    await syncClient.pushSession(newSession);
     refresh();
     return newSession.id;
   };
@@ -133,12 +130,12 @@ export function useSessions() {
     const current = localDB.getSessions().find(s => s.id === id);
     if (!current) return;
     const updated = { ...current, ...updates };
-    localDB.saveSession(updated);
+    await syncClient.pushSession(updated);
     refresh();
   };
 
   const removeSession = async (id: string) => {
-    localDB.deleteSession(id);
+    await syncClient.deleteSession(id);
     refresh();
   };
 
@@ -216,6 +213,7 @@ export function useTreasury() {
   useEffect(() => {
     const handleUpdate = () => refresh();
     dbEvents.addEventListener('uph_db_treasury', handleUpdate);
+    syncClient.fetchTreasury().then(() => refresh());
     return () => dbEvents.removeEventListener('uph_db_treasury', handleUpdate);
   }, [refresh]);
 
@@ -225,7 +223,7 @@ export function useTreasury() {
       id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       createdAt: Date.now()
     };
-    localDB.saveTransaction(newTx);
+    await syncClient.pushTransaction(newTx);
     refresh();
     return newTx.id;
   };
@@ -236,7 +234,9 @@ export function useTreasury() {
       id: `tx-${Date.now()}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
       createdAt: Date.now()
     }));
-    localDB.saveTransactionsBatch(newItems);
+    for (const item of newItems) {
+      await syncClient.pushTransaction(item);
+    }
     refresh();
   };
 
@@ -244,12 +244,12 @@ export function useTreasury() {
     const current = localDB.getTransactions().find(t => t.id === id);
     if (!current) return;
     const updated = { ...current, ...updates };
-    localDB.saveTransaction(updated);
+    await syncClient.pushTransaction(updated);
     refresh();
   };
 
   const removeTransaction = async (id: string) => {
-    localDB.deleteTransaction(id);
+    await syncClient.deleteTransaction(id);
     refresh();
   };
 
