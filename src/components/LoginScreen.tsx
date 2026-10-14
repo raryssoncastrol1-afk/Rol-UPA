@@ -145,9 +145,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             : 'bg-[#18221D] border border-[#2A3A31] shadow-[0_4px_24px_rgba(0,0,0,0.3)]'
         }`}
       >
-        {/* Símbolo do Peixe Tradicional UPH */}
-        <div className="flex justify-center mb-5">
-          <UphFishLogo strokeColor={goldColor} className="w-20 h-10" />
+        {/* Logo Oficial UPH */}
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-[#235334] rounded-2xl flex items-center justify-center p-2 shadow-sm shrink-0 overflow-hidden">
+            <img 
+              src="/uph-logo-oficial.jpg" 
+              alt="Logo UPH" 
+              className="w-full h-full object-contain"
+            />
+          </div>
         </div>
 
         {/* Título Principal em Tipografia Serifada Solene */}
