@@ -7,31 +7,40 @@ interface LoginScreenProps {
 }
 
 // Símbolo do peixe da UPH em traço fino vetorial (Ichthys / UPH)
-const UphFishLogo: React.FC<{ strokeColor: string; className?: string }> = ({ strokeColor, className = "w-20 h-10" }) => (
+// Símbolo oficial do peixe da UPH com a cauda geométrica característica e tipografia serifada
+const UphFishLogo: React.FC<{ strokeColor: string; className?: string }> = ({ strokeColor, className = "w-24 h-14" }) => (
   <svg 
-    viewBox="0 0 100 45" 
+    viewBox="0 0 160 90" 
     fill="none" 
     xmlns="http://www.w3.org/2000/svg" 
     className={className}
-    stroke={strokeColor}
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
   >
-    {/* Arco superior contínuo que cruza a cauda */}
-    <path d="M 88 10 C 65 34 25 38 6 22.5 C 25 7 65 11 88 35" />
-    {/* Letras UPH integradas no centro com traço leve */}
+    {/* Arco superior do corpo do peixe que cruza na cauda */}
+    <path 
+      d="M 124 22 C 86 -2 32 3 8 28 C 32 53 86 58 124 34" 
+      stroke={strokeColor} 
+      strokeWidth="5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    {/* Barbatana/Cauda geométrica característica da UPH com dobra triangular aberta */}
+    <path 
+      d="M 124 22 L 150 7 L 134 40 L 148 56" 
+      stroke={strokeColor} 
+      strokeWidth="5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    {/* Sigla UPH interna com serifa clássica igual ao emblema oficial */}
     <text 
-      x="45" 
-      y="24" 
+      x="68" 
+      y="36" 
       fill={strokeColor} 
-      stroke="none" 
-      fontSize="7" 
-      fontFamily="sans-serif" 
+      fontSize="19" 
+      fontFamily="serif, 'Cormorant Garamond', Georgia" 
       fontWeight="700" 
-      letterSpacing="1.2" 
-      textAnchor="middle" 
-      opacity="0.9"
+      letterSpacing="2.5" 
+      textAnchor="middle"
     >
       UPH
     </text>
