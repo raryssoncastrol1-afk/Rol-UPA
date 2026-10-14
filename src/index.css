@@ -3,10 +3,11 @@
 
 @theme {
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-uph-green: #0a3d1c;
-  --color-uph-green-hover: #072b14;
-  --color-uph-gold: #c59b27;
+  --color-uph-green: #1b2e24;
+  --color-uph-green-hover: #14231b;
+  --color-uph-gold: #c2a267;
 }
 
 @media (prefers-reduced-motion: reduce) {
