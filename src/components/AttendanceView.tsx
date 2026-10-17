@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Gavel, Plus, Sparkles, ClipboardCheck, TimerReset, Timer } from 'lucide-react';
-import { Member, AttendanceStatus, SessionType } from '../types';
+import React, { useState, useMemo } from 'react';
+import { 
+  ClipboardCheck, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  Search, 
+  Users, 
+  Play, 
+  RotateCcw, 
+  CheckCheck, 
+  MessageSquare, 
+  ShieldCheck, 
+  Calendar,
+  Sparkles
+} from 'lucide-react';
+import { Member, SessionType, AttendanceStatus } from '../types';
+import { formatMemberNameWithTitle, getInitials, stripEcclesiasticalTitle } from '../lib/memberUtils';
 
 interface AttendanceViewProps {
   members: Member[];
@@ -14,8 +28,8 @@ interface AttendanceViewProps {
   justifications: Record<string, string>;
   setJustifications: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   totals: {
-    presencePercentage: number;
     presentCount: number;
+    presencePercentage: number;
     metQuorum1st: boolean;
     metQuorum2nd: boolean;
   };
@@ -35,349 +49,462 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   setJustifications,
   totals,
   isStarted,
-  setIsStarted
+  setIsStarted,
 }) => {
-  const [timerOverride, setTimerOverride] = useState(() => {
-    return localStorage.getItem('uph_timerOverride') === 'true';
-  });
-  const [timeLeft, setTimeLeft] = useState<number>(() => {
-    const saved = localStorage.getItem('uph_timeLeft');
-    return saved ? Number(saved) : 30 * 60;
-  });
-  const [isRunning, setIsRunning] = useState(() => {
-    return localStorage.getItem('uph_timerIsRunning') === 'true';
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'presente' | 'ausente' | 'falta_justificada'>('all');
+  const [activeJustifyingMemberId, setActiveJustifyingMemberId] = useState<string | null>(null);
 
-  // Track the timestamp when it was running so we can adjust it if the user closed the window and came back
-  const [lastTick, setLastTick] = useState<number>(() => {
-    const saved = localStorage.getItem('uph_lastTick');
-    return saved ? Number(saved) : Date.now();
-  });
+  // Calcula contagens atuais
+  const absentCount = members.filter(m => (attendanceRecords[m.id] || 'ausente') === 'ausente').length;
+  const justifiedCount = members.filter(m => attendanceRecords[m.id] === 'falta_justificada').length;
+  const quorumTarget = plenaryCall === 1 ? Math.floor(members.length / 2) + 1 : Math.ceil(members.length / 3);
+  const isQuorumMet = plenaryCall === 1 ? totals.metQuorum1st : totals.metQuorum2nd;
 
-  useEffect(() => {
-    localStorage.setItem('uph_timerOverride', String(timerOverride));
-    localStorage.setItem('uph_timeLeft', String(timeLeft));
-    localStorage.setItem('uph_timerIsRunning', String(isRunning));
-    localStorage.setItem('uph_lastTick', String(lastTick));
-  }, [timerOverride, timeLeft, isRunning, lastTick]);
-
-  useEffect(() => {
-    if (isStarted && !localStorage.getItem('uph_timerInitForSession')) {
-       setTimeLeft(30 * 60);
-       setIsRunning(false);
-       setTimerOverride(false);
-       localStorage.setItem('uph_timerInitForSession', 'true');
-    } else if (!isStarted) {
-       localStorage.removeItem('uph_timerInitForSession');
-    }
-  }, [isStarted]);
-
-  useEffect(() => {
-    // If we mount and it is running, let's fast forward the time based on how much time passed since last tick
-    if (isRunning) {
-      const now = Date.now();
-      const diffSeconds = Math.floor((now - lastTick) / 1000);
-      if (diffSeconds > 0) {
-        setTimeLeft((prev) => Math.max(0, prev - diffSeconds));
-        setLastTick(now);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isRunning || timerOverride || plenaryCall === 2 || totals.metQuorum1st || !isStarted) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setIsRunning(false);
-          return 0;
+  const handleStartAttendance = () => {
+    // Inicializa todos como ausente caso ainda não existam registros
+    setAttendanceRecords(prev => {
+      const initialized = { ...prev };
+      members.forEach(m => {
+        if (!initialized[m.id]) {
+          initialized[m.id] = 'ausente';
         }
-        return prev - 1;
       });
-      setLastTick(Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning, timerOverride, plenaryCall, totals.metQuorum1st, isStarted]);
-
-  const canStartSecondCall = totals.metQuorum1st || plenaryCall === 2 || timeLeft === 0 || timerOverride;
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+      return initialized;
+    });
+    setIsStarted(true);
   };
 
+  const handleSetStatus = (memberId: string, status: AttendanceStatus) => {
+    setAttendanceRecords(prev => ({ ...prev, [memberId]: status }));
+    if (status === 'falta_justificada') {
+      setActiveJustifyingMemberId(memberId);
+    } else if (activeJustifyingMemberId === memberId) {
+      setActiveJustifyingMemberId(null);
+    }
+  };
+
+  const handleMarkAllPresent = () => {
+    const updated: Record<string, AttendanceStatus> = {};
+    members.forEach(m => {
+      updated[m.id] = 'presente';
+    });
+    setAttendanceRecords(updated);
+  };
+
+  const handleResetAttendance = () => {
+    const updated: Record<string, AttendanceStatus> = {};
+    members.forEach(m => {
+      updated[m.id] = 'ausente';
+    });
+    setAttendanceRecords(updated);
+    setJustifications({});
+  };
+
+  const filteredMembers = useMemo(() => {
+    return members.filter(m => {
+      const currentStatus = attendanceRecords[m.id] || 'ausente';
+      if (filterStatus !== 'all' && currentStatus !== filterStatus) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchName = m.name.toLowerCase().includes(query);
+        const matchCargo = m.cargo?.toLowerCase().includes(query) ?? false;
+        const matchFuncao = m.funcaoEclesiastica?.toLowerCase().includes(query) ?? false;
+        return matchName || matchCargo || matchFuncao;
+      }
+      return true;
+    });
+  }, [members, attendanceRecords, filterStatus, searchQuery]);
+
+  // Se a chamada ainda não foi iniciada, exibe tela de configuração
   if (!isStarted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] py-12 px-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-xl w-full bg-white rounded-2xl p-8 md:p-12 border border-slate-200 shadow-sm text-center relative overflow-hidden"
-        >
-          <div className="relative z-10">
-            <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-md shadow-indigo-100 mx-auto mb-6 transition-transform hover:scale-105">
-              <ClipboardCheck className="w-10 h-10 text-white" />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="bg-white dark:bg-[#18221D] p-6 md:p-8 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] rounded-xl flex items-center justify-center border border-[#1B2E24]/20 dark:border-[#2A3A31]">
+              <ClipboardCheck className="w-6 h-6" />
             </div>
-            
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-3 tracking-tight">Iniciar Chamada Ativa</h2>
-            <p className="text-slate-500 font-medium mb-8 text-sm leading-relaxed px-4">
-              Prepare-se para registrar a frequência dos membros. Escolha o tipo de evento e visualize o quórum em tempo real.
-            </p>
-            
-            <button 
-              onClick={() => setIsStarted(true)}
-              className="group w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white py-4 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-indigo-200 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
-              Nova Chamada do Dia
-              <Sparkles className="w-4 h-4 text-indigo-200" />
-            </button>
-            
-            <div className="mt-8 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Sistema Online • {members.length} membros aptos</span>
+            <div>
+              <h3 className="text-lg md:text-xl font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
+                Iniciar Lista de Presença
+              </h3>
+              <p className="text-xs md:text-sm text-[#5C665F] dark:text-[#8A968F]">
+                Configure a natureza da reunião antes de iniciar o registro de chamada.
+              </p>
             </div>
           </div>
-        </motion.div>
+
+          <div className="space-y-6">
+            {/* Seleção do Tipo de Reunião */}
+            <div>
+              <label className="block text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8] uppercase tracking-wider mb-2.5">
+                Tipo de Reunião
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSessionType('programacao')}
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    sessionType === 'programacao'
+                      ? 'bg-[#1B2E24]/5 dark:bg-[#14231B] border-[#1B2E24] dark:border-[#C8A96E] text-[#1B2E24] dark:text-[#EDEDE8] ring-1 ring-[#1B2E24] dark:ring-[#C8A96E]'
+                      : 'bg-white dark:bg-[#111614] border-[#E4DFD5] dark:border-[#2A3A31] text-[#5C665F] dark:text-[#8A968F] hover:border-[#1B2E24]/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm">Programação Regular</span>
+                    <Calendar className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
+                  </div>
+                  <p className="text-xs text-[#5C665F] dark:text-[#8A968F]">
+                    Devocionais, cultos, reuniões de trabalho, estudos ou eventos gerais.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSessionType('plenaria')}
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    sessionType === 'plenaria'
+                      ? 'bg-[#1B2E24]/5 dark:bg-[#14231B] border-[#1B2E24] dark:border-[#C8A96E] text-[#1B2E24] dark:text-[#EDEDE8] ring-1 ring-[#1B2E24] dark:ring-[#C8A96E]'
+                      : 'bg-white dark:bg-[#111614] border-[#E4DFD5] dark:border-[#2A3A31] text-[#5C665F] dark:text-[#8A968F] hover:border-[#1B2E24]/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm">Assembleia Plenária</span>
+                    <ShieldCheck className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
+                  </div>
+                  <p className="text-xs text-[#5C665F] dark:text-[#8A968F]">
+                    Reunião oficial deliberativa da UPH com verificação regimental de quórum.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Configuração de Plenária (Convocação) */}
+            {sessionType === 'plenaria' && (
+              <div className="p-4 rounded-xl bg-[#F6F4EF] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] space-y-3">
+                <label className="block text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8] uppercase tracking-wider">
+                  Número da Convocação
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPlenaryCall(1)}
+                    className={`py-2.5 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      plenaryCall === 1
+                        ? 'bg-[#1B2E24] text-white dark:bg-[#C8A96E] dark:text-[#111614] border-transparent shadow-xs'
+                        : 'bg-white dark:bg-[#18221D] text-[#5C665F] dark:text-[#8A968F] border-[#E4DFD5] dark:border-[#2A3A31]'
+                    }`}
+                  >
+                    1ª Convocação (50% + 1)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlenaryCall(2)}
+                    className={`py-2.5 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      plenaryCall === 2
+                        ? 'bg-[#1B2E24] text-white dark:bg-[#C8A96E] dark:text-[#111614] border-transparent shadow-xs'
+                        : 'bg-white dark:bg-[#18221D] text-[#5C665F] dark:text-[#8A968F] border-[#E4DFD5] dark:border-[#2A3A31]'
+                    }`}
+                  >
+                    2ª Convocação (1/3 dos membros)
+                  </button>
+                </div>
+                <div className="text-xs text-[#5C665F] dark:text-[#8A968F] flex items-center gap-1.5 pt-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#C8A96E]" />
+                  <span>
+                    Exigência regimental: <strong>{quorumTarget}</strong> irmãos presentes (de {members.length} cadastrados).
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Resumo do Rol */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31]">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-[#C2A267] dark:text-[#C8A96E]" />
+                <div>
+                  <p className="text-xs font-medium text-[#5C665F] dark:text-[#8A968F]">Membros no Rol Oficial</p>
+                  <p className="text-sm font-bold text-[#1B2E24] dark:text-[#EDEDE8]">{members.length} irmãos cadastrados</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleStartAttendance}
+                disabled={members.length === 0}
+                className="px-5 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Play className="w-4 h-4" />
+                Iniciar Chamada Agora
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Visualização com a chamada ativa
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
-    >
-      {/* Header with back option */}
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => setIsStarted(false)}
-          className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors cursor-pointer"
-        >
-          ← Cancelar Chamada
-        </button>
-      </div>
-      {/* Status Bar */}
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Quórum Atual</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{Math.round(totals.presencePercentage)}%</p>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
-            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Presentes</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{totals.presentCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
-            <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Total Sócios</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{members.length}</p>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center md:text-left">
-            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Status Quórum</p>
-            <p className={`text-[10px] font-black uppercase mt-1 ${sessionType === 'plenaria' ? (totals.metQuorum1st ? 'text-emerald-600' : totals.metQuorum2nd ? 'text-amber-600' : 'text-rose-600') : 'text-slate-400'}`}>
-              {sessionType === 'plenaria' 
-                ? (totals.metQuorum1st ? '1ª Chamada OK' : totals.metQuorum2nd ? '2ª Chamada OK' : 'Sem Quórum')
-                : 'Livre'}
-            </p>
+    <div className="space-y-6">
+      {/* Placar de Quórum e Frequência */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#18221D] p-4.5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-1">Presentes</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl md:text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              {totals.presentCount}
+            </span>
+            <span className="text-xs text-[#5C665F] dark:text-[#8A968F]">
+              ({totals.presencePercentage.toFixed(0)}%)
+            </span>
           </div>
         </div>
 
-        <div className="bg-slate-900 p-2 rounded-[2rem] flex gap-2 self-center shadow-xl">
-          <button 
-            onClick={() => setSessionType('programacao')}
-            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-              sessionType === 'programacao' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Programação
-          </button>
-          <button 
-            onClick={() => setSessionType('plenaria')}
-            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-              sessionType === 'plenaria' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Plenária
-          </button>
-        </div>
-      </div>
-
-      {sessionType === 'plenaria' && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-indigo-50 border-2 border-indigo-100 p-6 rounded-[2.5rem] mb-8 flex flex-col md:flex-row items-center justify-between gap-6"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Gavel className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight">Regra de Quórum UPH</h4>
-              <p className="text-xs text-indigo-500 font-medium">1ª Chamada: 51% • 2ª Chamada: 1/3 (33.3%)</p>
-            </div>
+        <div className="bg-white dark:bg-[#18221D] p-4.5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-1">Ausentes</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl md:text-3xl font-mono font-bold text-rose-600 dark:text-rose-400">
+              {absentCount}
+            </span>
+            <span className="text-xs text-[#5C665F] dark:text-[#8A968F]">irmãos</span>
           </div>
+        </div>
 
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex gap-2 bg-white/50 p-1.5 rounded-2xl border border-indigo-100">
-              <button 
-                onClick={() => setPlenaryCall(1)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center cursor-pointer ${
-                  plenaryCall === 1 ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-500 hover:bg-white'
+        <div className="bg-white dark:bg-[#18221D] p-4.5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-1">Faltas Justificadas</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl md:text-3xl font-mono font-bold text-amber-600 dark:text-amber-400">
+              {justifiedCount}
+            </span>
+            <span className="text-xs text-[#5C665F] dark:text-[#8A968F]">registradas</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#18221D] p-4.5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs flex flex-col justify-between">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-1">
+            {sessionType === 'plenaria' ? 'Quórum Deliberativo' : 'Status da Chamada'}
+          </p>
+          {sessionType === 'plenaria' ? (
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
+                  isQuorumMet
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60'
                 }`}
               >
-                1ª Chamada
-                <span className={`text-[8px] opacity-70 ${totals.metQuorum1st ? '' : (plenaryCall === 1 ? 'text-rose-200' : 'text-rose-400')}`}>
-                  {totals.metQuorum1st ? 'Suficiente' : 'Abaixo 51%'}
-                </span>
-              </button>
-              <button 
-                onClick={() => {
-                  if (canStartSecondCall) setPlenaryCall(2);
-                }}
-                disabled={!canStartSecondCall && plenaryCall === 1}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center ${
-                  plenaryCall === 2 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : canStartSecondCall
-                      ? 'text-indigo-500 hover:bg-white cursor-pointer'
-                      : 'text-slate-400 cursor-not-allowed opacity-60'
-                }`}
-              >
-                2ª Chamada
-                <span className={`text-[8px] opacity-70 ${totals.metQuorum2nd ? '' : (plenaryCall === 2 ? 'text-rose-200' : 'text-rose-400')}`}>
-                  {totals.metQuorum2nd ? 'Suficiente' : 'Abaixo 33%'}
-                </span>
-              </button>
-            </div>
-            
-            {plenaryCall === 1 && !totals.metQuorum1st && !timerOverride && timeLeft > 0 && (
-              <div className="flex items-center gap-2 mr-2">
-                <button 
-                  onClick={() => setIsRunning(!isRunning)}
-                  className="flex items-center gap-1 px-2 py-1 bg-indigo-100 rounded-lg text-[9px] font-black uppercase text-indigo-700 hover:bg-indigo-200 transition-colors cursor-pointer"
-                >
-                  {isRunning ? 'Pausar' : 'Iniciar'}
-                </button>
-                <Timer className={`w-3.5 h-3.5 text-amber-500 ${isRunning ? 'animate-pulse' : ''}`} />
-                <span className="text-[10px] font-black text-amber-600 tracking-widest">{formatTime(timeLeft)} min</span>
-                <div className="w-px h-3 bg-indigo-200 mx-1" />
-                <button
-                  onClick={() => { setTimerOverride(true); setIsRunning(false); }}
-                  className="flex items-center gap-1 text-[9px] font-black uppercase text-indigo-500 hover:text-indigo-700 transition-colors cursor-pointer"
-                >
-                  <TimerReset className="w-3 h-3" /> Pular
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="hidden lg:block text-right">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resultado</p>
-            <p className={`text-sm font-black ${
-              plenaryCall === 1 
-                ? (totals.metQuorum1st ? 'text-emerald-500' : 'text-rose-500')
-                : (totals.metQuorum2nd ? 'text-emerald-500' : 'text-rose-500')
-            }`}>
-              {plenaryCall === 1 
-                ? (totals.metQuorum1st ? 'QUÓRUM ATINGIDO' : 'AGUARDAR QUÓRUM')
-                : (totals.metQuorum2nd ? 'QUÓRUM ATINGIDO' : 'AGUARDAR QUÓRUM')}
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        <div className="bg-slate-50/70 border-b border-slate-100 grid grid-cols-12 px-6 md:px-8 py-3.5 text-[11px] font-black uppercase text-slate-500 tracking-wider">
-          <div className="col-span-5 md:col-span-5">Membro</div>
-          <div className="col-span-2 hidden md:block">Status Atual</div>
-          <div className="col-span-7 md:col-span-5 text-right">Registrar</div>
-        </div>
-        
-        <div className="divide-y divide-slate-100">
-          {members.length === 0 ? (
-            <div className="p-16 text-center text-slate-400 italic">
-              Nenhum membro para realizar a chamada.
+                {isQuorumMet ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Quórum Atingido ({totals.presentCount}/{quorumTarget})
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3.5 h-3.5" /> Falta(m) {Math.max(0, quorumTarget - totals.presentCount)} para Quórum
+                  </>
+                )}
+              </span>
             </div>
           ) : (
-            members.map((member, idx) => (
-              <div key={member.id} className={`grid grid-cols-12 px-6 md:px-8 py-3.5 items-center ${idx % 2 === 1 ? 'bg-slate-50/40' : ''}`}>
-                <div className="col-span-5 md:col-span-5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-[10px] shrink-0">
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="font-bold text-slate-800 text-sm leading-tight truncate">{member.name}</span>
-                    {justifications[member.id] && (
-                      <span className="text-[9px] text-indigo-600 font-bold mt-0.5 truncate">Obs: {justifications[member.id]}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="col-span-2 hidden md:block">
-                  {!attendanceRecords[member.id] ? (
-                    <span className="text-[10px] text-slate-400 italic font-medium">Pendente</span>
-                  ) : (
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${
-                      attendanceRecords[member.id] === 'presente' ? 'text-emerald-700' :
-                      attendanceRecords[member.id] === 'ausente' ? 'text-rose-700' : 'text-amber-700'
-                    }`}>
-                      {attendanceRecords[member.id].replace('_', ' ')}
-                    </span>
-                  )}
-                </div>
-                <div className="col-span-7 md:col-span-5 flex justify-end gap-1.5 md:gap-2">
-                  <button 
-                    onClick={() => setAttendanceRecords(prev => ({ ...prev, [member.id]: 'presente' }))}
-                    aria-label={`Marcar ${member.name} como presente`}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
-                      attendanceRecords[member.id] === 'presente' 
-                      ? 'bg-emerald-600 text-white shadow-sm' 
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">Presente</span>
-                    <span className="sm:hidden">P</span>
-                  </button>
-                  <button 
-                    onClick={() => setAttendanceRecords(prev => ({ ...prev, [member.id]: 'ausente' }))}
-                    aria-label={`Marcar ${member.name} como ausente`}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
-                      attendanceRecords[member.id] === 'ausente' 
-                      ? 'bg-rose-600 text-white shadow-sm' 
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">Ausente</span>
-                    <span className="sm:hidden">A</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setAttendanceRecords(prev => ({ ...prev, [member.id]: 'falta_justificada' }));
-                      const text = prompt('Justificativa para ' + member.name);
-                      if (text) setJustifications(prev => ({ ...prev, [member.id]: text }));
-                    }}
-                    aria-label={`Justificar falta de ${member.name}`}
-                    className={`w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-xl text-xs md:text-[10px] font-black uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center ${
-                      attendanceRecords[member.id] === 'falta_justificada' 
-                      ? 'bg-amber-600 text-white shadow-sm' 
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">Justificar</span>
-                    <span className="sm:hidden">J</span>
-                  </button>
-                </div>
-              </div>
-            ))
+            <div className="flex items-center gap-2 text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E]">
+              <Sparkles className="w-4 h-4 text-[#C2A267]" /> Programação Regular
+            </div>
           )}
         </div>
       </div>
-    </motion.div>
+
+      {/* Controles de Busca e Filtros */}
+      <div className="bg-white dark:bg-[#18221D] p-4 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C665F] dark:text-[#8A968F]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Buscar por nome ou cargo do irmão..."
+            className="w-full pl-10 pr-4 py-2 text-xs md:text-sm bg-[#F6F4EF] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-[#1B2E24] dark:text-[#EDEDE8] placeholder:text-[#5C665F]/60 dark:placeholder:text-[#8A968F]/60 focus:outline-hidden focus:ring-1 focus:ring-[#1B2E24] dark:focus:ring-[#C8A96E]"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Abas de filtro (Responsivo no celular com overflow-x-auto) */}
+          <div className="flex items-center bg-[#F6F4EF] dark:bg-[#111614] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] overflow-x-auto max-w-full scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setFilterStatus('all')}
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                filterStatus === 'all'
+                  ? 'bg-white dark:bg-[#18221D] text-[#1B2E24] dark:text-[#EDEDE8] shadow-2xs'
+                  : 'text-[#5C665F] dark:text-[#8A968F]'
+              }`}
+            >
+              Todos ({members.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('presente')}
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                filterStatus === 'presente'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-[#5C665F] dark:text-[#8A968F]'
+              }`}
+            >
+              Presentes ({totals.presentCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('ausente')}
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                filterStatus === 'ausente'
+                  ? 'bg-rose-600 text-white shadow-2xs'
+                  : 'text-[#5C665F] dark:text-[#8A968F]'
+              }`}
+            >
+              Ausentes ({absentCount})
+            </button>
+          </div>
+
+          {/* Ações em lote */}
+          <button
+            type="button"
+            onClick={handleMarkAllPresent}
+            title="Marcar todos como presentes"
+            className="px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <CheckCheck className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Marcar Todos</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleResetAttendance}
+            title="Limpar seleções"
+            className="p-2 text-xs font-medium text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:bg-[#F6F4EF] dark:hover:bg-[#111614] rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Lista de Chamada dos Membros */}
+      <div className="bg-white dark:bg-[#18221D] rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs overflow-hidden">
+        {filteredMembers.length === 0 ? (
+          <div className="p-12 text-center text-[#5C665F] dark:text-[#8A968F] text-xs">
+            Nenhum membro encontrado com os filtros atuais.
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E4DFD5] dark:divide-[#2A3A31]">
+            {filteredMembers.map((member, index) => {
+              const currentStatus: AttendanceStatus = attendanceRecords[member.id] || 'ausente';
+              const memberJustification = justifications[member.id] || '';
+              const isJustifying = activeJustifyingMemberId === member.id || (currentStatus === 'falta_justificada' && memberJustification);
+
+              return (
+                <div 
+                  key={member.id} 
+                  className={`p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    currentStatus === 'presente' 
+                      ? 'bg-emerald-50/30 dark:bg-emerald-950/10' 
+                      : currentStatus === 'falta_justificada'
+                      ? 'bg-amber-50/30 dark:bg-amber-950/10'
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono text-xs text-[#5C665F]/60 dark:text-[#8A968F]/60 w-6 text-right">
+                      {(index + 1).toString().padStart(2, '0')}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] font-bold text-xs flex items-center justify-center shrink-0">
+                      {getInitials(member.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#1B2E24] dark:text-[#EDEDE8] truncate">
+                        {formatMemberNameWithTitle(member)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {member.cargo && (
+                          <span className="text-[11px] font-semibold text-[#5C665F] dark:text-[#8A968F]">
+                            {member.cargo}
+                          </span>
+                        )}
+                        {member.funcaoEclesiastica && (
+                          <span className="text-[10px] text-[#5C665F]/80 dark:text-[#8A968F]/80 bg-[#F6F4EF] dark:bg-[#111614] px-1.5 py-0.5 rounded border border-[#E4DFD5] dark:border-[#2A3A31]">
+                            {member.funcaoEclesiastica}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botões de Ação por Membro */}
+                  <div className="flex flex-col sm:items-end gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 bg-[#F6F4EF] dark:bg-[#111614] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31]">
+                      {/* Botão Presente */}
+                      <button
+                        type="button"
+                        onClick={() => handleSetStatus(member.id, 'presente')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentStatus === 'presente'
+                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            : 'text-[#5C665F] dark:text-[#8A968F] hover:text-emerald-700 hover:bg-white dark:hover:bg-[#18221D]'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Presente</span>
+                      </button>
+
+                      {/* Botão Ausente */}
+                      <button
+                        type="button"
+                        onClick={() => handleSetStatus(member.id, 'ausente')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentStatus === 'ausente'
+                            ? 'bg-rose-600 text-white shadow-2xs'
+                            : 'text-[#5C665F] dark:text-[#8A968F] hover:text-rose-700 hover:bg-white dark:hover:bg-[#18221D]'
+                        }`}
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Ausente</span>
+                      </button>
+
+                      {/* Botão Falta Justificada */}
+                      <button
+                        type="button"
+                        onClick={() => handleSetStatus(member.id, 'falta_justificada')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentStatus === 'falta_justificada'
+                            ? 'bg-amber-600 text-white shadow-2xs'
+                            : 'text-[#5C665F] dark:text-[#8A968F] hover:text-amber-700 hover:bg-white dark:hover:bg-[#18221D]'
+                        }`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Justificada</span>
+                      </button>
+                    </div>
+
+                    {/* Campo de Justificativa se o status for falta justificada */}
+                    {currentStatus === 'falta_justificada' && (
+                      <div className="w-full sm:w-64 mt-1">
+                        <input
+                          type="text"
+                          value={justifications[member.id] || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setJustifications(prev => ({ ...prev, [member.id]: val }));
+                          }}
+                          placeholder="Motivo da justificativa (ex: trabalho, viagem)..."
+                          className="w-full px-2.5 py-1 text-xs bg-white dark:bg-[#18221D] border border-amber-300 dark:border-amber-700 rounded-lg text-[#1B2E24] dark:text-[#EDEDE8] placeholder:text-[#5C665F]/60 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

@@ -15,25 +15,23 @@ import {
   ChevronUp, 
   X, 
   Check, 
-  HeartHandshake,
-  ShieldCheck,
-  Phone,
-  Mail,
-  Calendar,
-  Landmark,
-  Upload,
-  Download,
-  FileText,
-  Send
+  ShieldCheck, 
+  Phone, 
+  Calendar, 
+  Landmark, 
+  Upload, 
+  Download, 
+  Send,
+  Star,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Member, FuncaoEclesiastica, SituacaoMembro, EstadoCivil } from '../types';
 import { 
   getInitials, 
   calcularIdade, 
   formatPhone, 
   gerarWhatsAppUrl, 
-  formatDateBR,
   stripEcclesiasticalTitle,
   compareMembersByName
 } from '../lib/memberUtils';
@@ -47,9 +45,9 @@ interface MembersViewProps {
   removeMember: (id: string) => Promise<void>;
   updateMember: (id: string, updates: Partial<Member>) => Promise<void>;
   importMembersBatch?: (
-    members: Partial<Member>[], 
+    members: any[], 
     options?: { updateExisting?: boolean }
-  ) => Promise<{ added: number; updated: number; skipped: number }>;
+  ) => Promise<{ added: number; updated: number; skipped: number } | void>;
   onSelectMember: (member: Member) => void;
   onOpenEditMember?: (member: Member) => void;
   initialEditingMember?: Member | null;
@@ -63,11 +61,11 @@ export const MembersView: React.FC<MembersViewProps> = ({
   updateMember,
   importMembersBatch,
   onSelectMember,
-  onOpenEditMember,
   initialEditingMember,
   onClearEditingMember
 }) => {
-  // Quick Add State
+  // Quick Add State & Accordion
+  const [showAddForm, setShowAddForm] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberModality, setNewMemberModality] = useState<string>('Não se aplica');
   const [newMemberCargo, setNewMemberCargo] = useState('');
@@ -79,6 +77,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
   const [newCpf, setNewCpf] = useState('');
   const [newSituacao, setNewSituacao] = useState<SituacaoMembro>('Em Plena Comunhão');
   const [newDizimista, setNewDizimista] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Markdown Import / Export Modal State
   const [showImportModal, setShowImportModal] = useState(false);
@@ -218,11 +217,12 @@ export const MembersView: React.FC<MembersViewProps> = ({
     }
   };
 
-  // Add Member
+  // Add Member Handler
   const handleAdd = async () => {
     const trimmedName = newMemberName.trim();
     if (!trimmedName) return;
 
+    setIsSubmitting(true);
     let finalName = stripEcclesiasticalTitle(trimmedName);
     let finalCargo = newMemberCargo.trim();
     let funcaoEcl: FuncaoEclesiastica = 'Não se aplica';
@@ -263,12 +263,37 @@ export const MembersView: React.FC<MembersViewProps> = ({
       setNewSituacao('Em Plena Comunhão');
       setNewDizimista(false);
       setShowExtendedAdd(false);
+      setShowAddForm(false);
     } catch (err) {
       console.error('Erro ao adicionar membro:', err);
       const msg = err instanceof Error ? err.message : 'Verifique a conexão com o servidor.';
       alert(`Falha ao adicionar membro: ${msg}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Summary Metrics matching the Dashboard institutional standard
+  const totalMembros = members.length;
+  
+  const oficiaisCount = useMemo(() => {
+    return members.filter(m => {
+      const isOficial = (
+        m.name.includes('Presb.') || m.name.includes('Diác.') || m.name.includes('Rev.') ||
+        m.cargo?.includes('Presbítero') || m.cargo?.includes('Diácono') || m.cargo?.includes('Pastor') ||
+        m.funcaoEclesiastica === 'Presbítero' || m.funcaoEclesiastica === 'Diácono' || m.funcaoEclesiastica === 'Pastor'
+      );
+      return isOficial;
+    }).length;
+  }, [members]);
+
+  const comungantesCount = useMemo(() => {
+    return members.filter(m => !m.situacao || m.situacao === 'Em Plena Comunhão').length;
+  }, [members]);
+
+  const dizimistasCount = useMemo(() => {
+    return members.filter(m => !!m.dizimista).length;
+  }, [members]);
 
   // Filtered members list
   const filteredMembers = useMemo(() => {
@@ -280,9 +305,11 @@ export const MembersView: React.FC<MembersViewProps> = ({
       if (filterSituacao === 'comungantes') {
         if (m.situacao && m.situacao !== 'Em Plena Comunhão') return false;
       } else if (filterSituacao === 'oficiais') {
-        const isOficial = (m.name.includes('Presb.') || m.name.includes('Diác.') || m.name.includes('Rev.') ||
+        const isOficial = (
+          m.name.includes('Presb.') || m.name.includes('Diác.') || m.name.includes('Rev.') ||
           m.cargo?.includes('Presbítero') || m.cargo?.includes('Diácono') || m.cargo?.includes('Pastor') ||
-          m.funcaoEclesiastica === 'Presbítero' || m.funcaoEclesiastica === 'Diácono' || m.funcaoEclesiastica === 'Pastor');
+          m.funcaoEclesiastica === 'Presbítero' || m.funcaoEclesiastica === 'Diácono' || m.funcaoEclesiastica === 'Pastor'
+        );
         if (!isOficial) return false;
       } else if (filterSituacao === 'dizimistas') {
         if (!m.dizimista) return false;
@@ -310,231 +337,342 @@ export const MembersView: React.FC<MembersViewProps> = ({
   }, [members, searchQuery, filterSituacao]);
 
   return (
-    <div className="space-y-8">
-      {/* Box Adicionar Novo Integrante */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-              <UserPlus className="w-4 h-4" />
-            </div>
-            <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Adicionar Integrante na UPH</h3>
+    <div className="space-y-6 md:space-y-8">
+      {/* 1. Executive KPI Cards (Aligned with Dashboard standard) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 text-left">
+        <div className="bg-[#1B2E24] dark:bg-[#14231B] p-5 rounded-2xl shadow-2xs text-[#FAF8F5] border border-[#2A3A31] transition-all">
+          <p className="text-xs font-semibold text-[#8A968F] mb-2">Rol Ativo Total</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl md:text-4xl font-mono font-bold text-[#FAF8F5] tracking-tight">{totalMembros}</p>
+            <span className="text-xs font-medium text-[#C2A267] dark:text-[#C8A96E]">irmãos</span>
           </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {importMembersBatch && (
-              <button
-                type="button"
-                onClick={() => setShowImportModal(true)}
-                className="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-1.5"
-                title="Alimentar rol de membros a partir de arquivo Markdown (.md)"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Alimentar Rol (.md)
-              </button>
-            )}
-            
+        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Oficiais da Igreja</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl md:text-4xl font-mono font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">{oficiaisCount}</p>
+            <span className="text-xs font-medium text-[#5C665F] dark:text-[#8A968F]">
+              {totalMembros > 0 ? `${Math.round((oficiaisCount / totalMembros) * 100)}%` : '0%'}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Em Plena Comunhão</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl md:text-4xl font-mono font-bold text-emerald-700 dark:text-emerald-400 tracking-tight">{comungantesCount}</p>
+            <span className="text-xs font-medium text-[#5C665F] dark:text-[#8A968F]">
+              {totalMembros > 0 ? `${Math.round((comungantesCount / totalMembros) * 100)}%` : '0%'}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+          <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Dizimistas Ativos</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl md:text-4xl font-mono font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">{dizimistasCount}</p>
+            <span className="text-xs font-medium text-[#C2A267] dark:text-[#C8A96E]">regulares</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Top Action Bar with Section Title and Primary Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-serif font-bold text-lg md:text-xl text-[#1B2E24] dark:text-[#EDEDE8] flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#C2A267] dark:text-[#C8A96E]" />
+            Rol de Membros da Sociedade
+          </h3>
+          <p className="text-xs text-[#5C665F] dark:text-[#8A968F] mt-0.5">
+            Cadastros oficiais, histórico de ofícios e geração de credenciais eleitorais
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {importMembersBatch && (
             <button
               type="button"
-              onClick={handleExportMarkdown}
-              disabled={members.length === 0}
-              className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center gap-1.5 disabled:opacity-40"
-              title="Exportar rol cadastrado em formato Markdown oficial"
+              onClick={() => setShowImportModal(true)}
+              className="px-3.5 py-2.5 bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#202C26] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              title="Alimentar rol de membros a partir de arquivo Markdown (.md)"
             >
-              <Download className="w-3.5 h-3.5" />
-              Exportar (.md)
+              <Upload className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
+              <span>Alimentar Rol (.md)</span>
             </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleExportMarkdown}
+            disabled={members.length === 0}
+            className="px-3.5 py-2.5 bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#202C26] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-40 shadow-2xs cursor-pointer"
+            title="Exportar rol cadastrado em formato Markdown oficial"
+          >
+            <Download className="w-4 h-4 text-[#5C665F] dark:text-[#8A968F]" />
+            <span>Exportar (.md)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAddForm(prev => !prev)}
+            className="px-4 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-[#FAF8F5] dark:text-[#111614] rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-2xs cursor-pointer active:scale-95"
+          >
+            {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showAddForm ? 'Fechar Cadastro' : 'Novo Membro'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Collapsible / Dedicated "Cadastrar Novo Integrante" Card */}
+      {showAddForm && (
+        <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl shadow-2xs p-5 md:p-7 transition-colors animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="flex items-center justify-between gap-4 mb-5 pb-4 border-b border-[#E4DFD5] dark:border-[#2A3A31]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-serif font-bold text-base text-[#1B2E24] dark:text-[#EDEDE8]">
+                  Cadastrar Novo Membro no Rol
+                </h4>
+                <p className="text-xs text-[#5C665F] dark:text-[#8A968F]">
+                  Preencha os dados e gere as credenciais institucionais
+                </p>
+              </div>
+            </div>
 
             <button
               type="button"
               onClick={() => setShowExtendedAdd(!showExtendedAdd)}
-              className="px-3 py-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+              className="px-3 py-1.5 text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
             >
               {showExtendedAdd ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               {showExtendedAdd ? 'Menos campos' : '+ Ficha Completa'}
             </button>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-4">
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Nome Completo</label>
-            <input 
-              type="text" 
-              placeholder="Ex: João da Silva Santos"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
-              value={newMemberName}
-              onChange={(e) => setNewMemberName(e.target.value)}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Ofício / Título</label>
-            <select
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
-              value={newMemberModality}
-              onChange={(e) => setNewMemberModality(e.target.value)}
-            >
-              <option value="Não se aplica">Não se aplica</option>
-              <option value="Diácono">Diácono</option>
-              <option value="Presbítero">Presbítero</option>
-              <option value="Pastor">Pastor</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Cargo na UPH</label>
-            <input 
-              type="text" 
-              placeholder="Ex: Sócio, Tesoureiro"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
-              value={newMemberCargo}
-              onChange={(e) => setNewMemberCargo(e.target.value)}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Entrada na UPH</label>
-            <input 
-              type="date" 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium"
-              value={newMemberEntryDate}
-              onChange={(e) => setNewMemberEntryDate(e.target.value)}
-            />
-          </div>
-          <div className="md:col-span-2 flex items-end">
-            <button 
-              onClick={handleAdd}
-              className="w-full bg-indigo-600 text-white h-[48px] rounded-2xl font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Cadastrar
-            </button>
-          </div>
-        </div>
-
-        {/* Campos extras opcionais inspirados no Caixa */}
-        {showExtendedAdd && (
-          <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="md:col-span-3">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">WhatsApp / Celular</label>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                Nome Completo *
+              </label>
               <input 
                 type="text" 
-                placeholder="(95) 99123-4567"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-500/20"
-                value={newContato}
-                onChange={(e) => setNewContato(e.target.value)}
+                placeholder="Ex: João da Silva Santos"
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:ring-1 focus:ring-[#1B2E24] dark:focus:ring-[#C8A96E] transition-all text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] placeholder:text-[#5C665F]/60"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAdd();
+                }}
               />
             </div>
-            <div className="md:col-span-3">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">E-mail</label>
-              <input 
-                type="email" 
-                placeholder="membro@email.com"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-500/20"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
-            </div>
+
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">Nascimento</label>
+              <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                Ofício Eclesiástico
+              </label>
+              <select
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:ring-1 focus:ring-[#1B2E24] dark:focus:ring-[#C8A96E] transition-all text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                value={newMemberModality}
+                onChange={(e) => setNewMemberModality(e.target.value)}
+              >
+                <option value="Não se aplica">Não se aplica</option>
+                <option value="Diácono">Diácono</option>
+                <option value="Presbítero">Presbítero</option>
+                <option value="Pastor">Pastor</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                Cargo na UPH
+              </label>
+              <input 
+                type="text" 
+                placeholder="Ex: Sócio, Tesoureiro"
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:ring-1 focus:ring-[#1B2E24] dark:focus:ring-[#C8A96E] transition-all text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] placeholder:text-[#5C665F]/60"
+                value={newMemberCargo}
+                onChange={(e) => setNewMemberCargo(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAdd();
+                }}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                Entrada na UPH
+              </label>
               <input 
                 type="date" 
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-500/20"
-                value={newNascimento}
-                onChange={(e) => setNewNascimento(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:ring-1 focus:ring-[#1B2E24] dark:focus:ring-[#C8A96E] transition-all text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                value={newMemberEntryDate}
+                onChange={(e) => setNewMemberEntryDate(e.target.value)}
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 ml-1">CPF</label>
-              <input 
-                type="text" 
-                placeholder="000.000.000-00"
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-500/20"
-                value={newCpf}
-                onChange={(e) => setNewCpf(e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2 flex items-center pt-5 pl-2">
-              <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                <input 
-                  type="checkbox"
-                  checked={newDizimista}
-                  onChange={(e) => setNewDizimista(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                Dizimista Ativo
-              </label>
+
+            <div className="md:col-span-2 flex items-end">
+              <button 
+                type="button"
+                onClick={handleAdd}
+                disabled={isSubmitting || !newMemberName.trim()}
+                className="w-full bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] disabled:opacity-40 text-white dark:text-[#111614] h-[42px] rounded-xl font-bold active:scale-95 transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-xs md:text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isSubmitting ? 'Gravando...' : 'Cadastrar'}</span>
+              </button>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Caixa de Pesquisa, Filtros e Lista */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        {/* Barra Superior com Busca e Filtros Rápidos */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/40">
+          {/* Extended Optional Registration Fields */}
+          {showExtendedAdd && (
+            <div className="mt-4 pt-4 border-t border-[#E4DFD5] dark:border-[#2A3A31] grid grid-cols-1 md:grid-cols-12 gap-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                  WhatsApp / Celular
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="(95) 99123-4567"
+                  className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                  value={newContato}
+                  onChange={(e) => setNewContato(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                  E-mail
+                </label>
+                <input 
+                  type="email" 
+                  placeholder="membro@email.com"
+                  className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                  Nascimento
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                  value={newNascimento}
+                  onChange={(e) => setNewNascimento(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1.5 ml-1">
+                  CPF
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="000.000.000-00"
+                  className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-medium text-[#1B2E24] dark:text-[#EDEDE8]"
+                  value={newCpf}
+                  onChange={(e) => setNewCpf(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2 flex items-center pt-5 pl-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
+                  <input 
+                    type="checkbox"
+                    checked={newDizimista}
+                    onChange={(e) => setNewDizimista(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#1B2E24] dark:text-[#C8A96E] focus:ring-[#1B2E24]"
+                  />
+                  Dizimista Ativo
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Search, Filter Bar and Members List Card */}
+      <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl shadow-2xs overflow-hidden flex flex-col transition-colors">
+        
+        {/* Search & Filter Header */}
+        <div className="p-4 sm:p-5 border-b border-[#E4DFD5] dark:border-[#2A3A31] flex flex-col sm:flex-row gap-3.5 items-center justify-between bg-[#FAF8F5] dark:bg-[#14231B]">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#5C665F] dark:text-[#8A968F] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Buscar por nome, cargo, celular, CPF..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full pl-9 pr-8 py-2 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-medium text-[#1B2E24] dark:text-[#EDEDE8] placeholder:text-[#5C665F]/60 focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C665F] hover:text-[#1B2E24] dark:text-[#8A968F] dark:hover:text-[#EDEDE8] text-xs cursor-pointer"
+                title="Limpar busca"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+          {/* Unified Filter Tabs (Responsive horizontal scrolling on mobile, zero overflow) */}
+          <div className="w-full sm:w-auto overflow-x-auto max-w-full flex items-center bg-[#F6F4EF] dark:bg-[#111614] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] gap-1 self-stretch sm:self-auto scrollbar-none">
             <button
+              type="button"
               onClick={() => setFilterSituacao('todos')}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 filterSituacao === 'todos' 
-                  ? 'bg-indigo-600 text-white shadow-sm' 
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#1B2E24] text-[#FAF8F5] dark:bg-[#C8A96E] dark:text-[#111614] shadow-2xs' 
+                  : 'text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
               Todos ({members.length})
             </button>
             <button
+              type="button"
               onClick={() => setFilterSituacao('comungantes')}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 filterSituacao === 'comungantes' 
-                  ? 'bg-emerald-600 text-white shadow-sm' 
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#1B2E24] text-[#FAF8F5] dark:bg-[#C8A96E] dark:text-[#111614] shadow-2xs' 
+                  : 'text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
-              Comungantes
+              Comungantes ({comungantesCount})
             </button>
             <button
+              type="button"
               onClick={() => setFilterSituacao('oficiais')}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 filterSituacao === 'oficiais' 
-                  ? 'bg-amber-600 text-white shadow-sm' 
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#1B2E24] text-[#FAF8F5] dark:bg-[#C8A96E] dark:text-[#111614] shadow-2xs' 
+                  : 'text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
-              Oficiais
+              Oficiais ({oficiaisCount})
             </button>
             <button
+              type="button"
               onClick={() => setFilterSituacao('dizimistas')}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 filterSituacao === 'dizimistas' 
-                  ? 'bg-purple-600 text-white shadow-sm' 
-                  : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#1B2E24] text-[#FAF8F5] dark:bg-[#C8A96E] dark:text-[#111614] shadow-2xs' 
+                  : 'text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
-              Dizimistas
+              Dizimistas ({dizimistasCount})
             </button>
           </div>
         </div>
 
-        {/* Cabeçalho da Tabela (Visível apenas em Desktop) */}
-        <div className="hidden md:grid bg-slate-50/50 border-b border-slate-100 grid-cols-12 px-6 md:px-8 py-3.5 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+        {/* Desktop Table Column Header */}
+        <div className="hidden md:grid bg-[#FAF8F5]/80 dark:bg-[#14231B] border-b border-[#E4DFD5] dark:border-[#2A3A31] grid-cols-12 px-6 md:px-8 py-3 text-xs font-semibold uppercase text-[#5C665F] dark:text-[#8A968F] tracking-wider">
           <div className="col-span-4">Membro</div>
           <div className="col-span-2">Cargo UPH</div>
           <div className="col-span-2">Contato / WhatsApp</div>
@@ -542,64 +680,90 @@ export const MembersView: React.FC<MembersViewProps> = ({
           <div className="col-span-2 text-right">Ações</div>
         </div>
         
-        {/* Linhas da Tabela */}
-        <div className="divide-y divide-slate-100">
+        {/* Members Rows */}
+        <div className="divide-y divide-[#E4DFD5] dark:divide-[#2A3A31]">
           {filteredMembers.length === 0 ? (
-            <div className="p-16 text-center text-slate-400 font-medium italic text-xs">
-              {searchQuery || filterSituacao !== 'todos'
-                ? 'Nenhum membro encontrado com os filtros selecionados.'
-                : 'Nenhum membro cadastrado até o momento.'}
+            <div className="p-16 text-center text-[#5C665F] dark:text-[#8A968F] font-medium italic text-xs">
+              <Users className="w-10 h-10 text-[#C2A267]/40 dark:text-[#C8A96E]/30 mx-auto mb-3" />
+              <p className="font-semibold text-sm text-[#1B2E24] dark:text-[#EDEDE8] not-italic mb-1">Nenhum membro encontrado</p>
+              <p className="text-xs">
+                {searchQuery || filterSituacao !== 'todos'
+                  ? 'Tente ajustar os filtros ou os termos de busca.'
+                  : 'Alimente o rol via arquivo .md ou adicione um novo integrante.'}
+              </p>
             </div>
           ) : (
-            filteredMembers.map((member, idx) => {
+            filteredMembers.map((member) => {
               const wa = gerarWhatsAppUrl(member.contato, `Olá ${member.name}, paz do Senhor!`);
               const idade = calcularIdade(member.nascimento);
+              const isUnderDiscipline = member.situacao === 'Sob Disciplina';
 
               return (
                 <div 
                   key={member.id} 
                   onClick={() => onSelectMember(member)}
-                  className={`flex flex-col md:grid md:grid-cols-12 px-4 sm:px-6 md:px-8 py-3.5 gap-2.5 md:gap-0 md:items-center transition-colors hover:bg-indigo-50/40 cursor-pointer group/row ${idx % 2 === 1 ? 'bg-slate-50/30' : ''}`}
+                  className="flex flex-col md:grid md:grid-cols-12 px-4 sm:px-6 md:px-8 py-3.5 gap-2.5 md:gap-0 md:items-center transition-colors hover:bg-[#FAF8F5] dark:hover:bg-[#14231B]/40 cursor-pointer group/row"
                 >
-                  {/* Topo do Card Mobile / Coluna 1 Desktop: Nome, Avatar e Informações Básicas */}
+                  {/* Name and Institutional Avatar */}
                   <div className="md:col-span-4 flex items-center justify-between md:justify-start gap-3">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-10 h-10 md:w-9 md:h-9 rounded-xl flex items-center justify-center font-bold text-xs shadow-sm bg-slate-900 text-white group-hover/row:bg-indigo-700 group-hover/row:scale-105 transition-all shrink-0">
+                      <div className="w-10 h-10 md:w-9 md:h-9 rounded-xl flex items-center justify-center font-bold text-xs shadow-2xs bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] shrink-0">
                         {getInitials(member.name)}
                       </div>
                       <div className="flex flex-col overflow-hidden">
-                        <span className="font-bold text-slate-800 text-sm leading-tight group-hover/row:text-indigo-600 transition-colors truncate">
+                        <span className="font-serif font-bold text-base text-[#1B2E24] dark:text-[#EDEDE8] leading-tight group-hover/row:text-[#C2A267] dark:group-hover/row:text-[#C8A96E] transition-colors truncate">
                           {stripEcclesiasticalTitle(member.name)}
                         </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {member.situacao === 'Sob Disciplina' ? (
-                            <span className="text-[10px] font-bold text-rose-600">Sob Disciplina</span>
-                          ) : (
-                            <span className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
-                              {member.funcaoEclesiastica && member.funcaoEclesiastica !== 'Não se aplica' 
-                                ? member.funcaoEclesiastica 
-                                : (member.cargo || 'Membro')}
-                              {idade !== null ? ` • ${idade} anos` : ''}
+                        
+                        {/* Unboxed Metadata with Typographic Separator (Anti-Slop Zero-Pill) */}
+                        <div className="flex items-center gap-1.5 mt-0.5 text-xs text-[#5C665F] dark:text-[#8A968F] truncate">
+                          {member.funcaoEclesiastica && member.funcaoEclesiastica !== 'Não se aplica' ? (
+                            <span className="font-medium text-[#1B2E24] dark:text-[#EDEDE8]">
+                              {member.funcaoEclesiastica}
                             </span>
+                          ) : (
+                            <span>{member.cargo || 'Membro'}</span>
                           )}
+
+                          {idade !== null && (
+                            <>
+                              <span aria-hidden="true" className="text-[#C2A267] dark:text-[#C8A96E]">·</span>
+                              <span className="font-mono tabular-nums">{idade} anos</span>
+                            </>
+                          )}
+
+                          {isUnderDiscipline ? (
+                            <>
+                              <span aria-hidden="true" className="text-rose-500">·</span>
+                              <span className="text-rose-600 dark:text-rose-400 font-semibold text-[11px]">Sob Disciplina</span>
+                            </>
+                          ) : (
+                            <>
+                              <span aria-hidden="true" className="text-[#C2A267] dark:text-[#C8A96E]">·</span>
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Comunhão</span>
+                            </>
+                          )}
+
                           {member.dizimista && (
-                            <span className="text-[10px] text-emerald-600 font-bold" title="Dizimista Ativo">★</span>
+                            <span className="text-[#C2A267] dark:text-[#C8A96E] font-bold text-xs ml-0.5" title="Dizimista Ativo">
+                              ★
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Cargo UPH visível em mobile como tag discreta */}
+                    {/* Cargo UPH em mobile */}
                     {member.cargo && (
-                      <span className="md:hidden text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md shrink-0">
+                      <span className="md:hidden text-[10px] font-semibold px-2 py-0.5 bg-[#FAF8F5] dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-md shrink-0">
                         {member.cargo}
                       </span>
                     )}
                   </div>
 
                   {/* Cargo UPH (Desktop) */}
-                  <div className="hidden md:block col-span-2 text-xs text-slate-600 font-medium truncate pr-2">
-                    <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[11px] font-semibold text-slate-700">
+                  <div className="hidden md:block col-span-2 text-xs text-[#5C665F] dark:text-[#8A968F] font-medium truncate pr-2">
+                    <span className="px-2.5 py-1 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-lg text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">
                       {member.cargo || 'Membro UPH'}
                     </span>
                   </div>
@@ -608,14 +772,16 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   <div className="hidden md:flex col-span-2 items-center gap-2">
                     {member.contato ? (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-600 font-mono">{formatPhone(member.contato)}</span>
+                        <span className="text-xs text-[#5C665F] dark:text-[#8A968F] font-mono tabular-nums">
+                          {formatPhone(member.contato)}
+                        </span>
                         {wa && (
                           <a
                             href={wa}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors"
+                            className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md transition-colors"
                             title="Conversar no WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
@@ -623,30 +789,32 @@ export const MembersView: React.FC<MembersViewProps> = ({
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-300 text-xs">-</span>
+                      <span className="text-[#5C665F]/40 text-xs font-mono">—</span>
                     )}
                   </div>
 
-                  {/* Linha Inferior no Celular / Colunas Finais no Desktop: PIN e Ações */}
-                  <div className="flex items-center justify-between md:contents pt-1.5 md:pt-0 border-t border-slate-100 md:border-t-0">
+                  {/* PIN e Ações (Responsivo no celular com flex-wrap) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 md:contents pt-2 md:pt-0 border-t border-[#E4DFD5] dark:border-[#2A3A31] md:border-t-0">
                     {/* PIN de Votação */}
-                    <div className="md:col-span-2 flex items-center gap-1.5">
+                    <div className="md:col-span-2 flex items-center gap-1.5 flex-wrap">
                       {member.pinCode ? (
-                        <div className="flex items-center gap-1 bg-slate-50 md:bg-transparent px-2 py-1 md:p-0 rounded-lg border border-slate-100 md:border-0">
-                          <span className="font-mono text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100 font-bold tracking-wider select-all">
+                        <div className="flex items-center gap-1 bg-[#FAF8F5] dark:bg-[#111614] px-2 py-1 md:py-0.5 rounded-lg border border-[#E4DFD5] dark:border-[#2A3A31]">
+                          <span className="font-mono text-xs text-[#1B2E24] dark:text-[#C8A96E] font-bold tracking-wider select-all tabular-nums">
                             {revealedPins[member.id] ? member.pinCode : '••••'}
                           </span>
                           <button
+                            type="button"
                             onClick={(e) => togglePinVisibility(e, member.id)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="p-1 text-[#5C665F] hover:text-[#1B2E24] dark:text-[#8A968F] dark:hover:text-[#EDEDE8] rounded-md transition-colors cursor-pointer"
                             title={revealedPins[member.id] ? "Ocultar PIN" : "Revelar PIN"}
                             aria-label={revealedPins[member.id] ? `Ocultar PIN de ${member.name}` : `Revelar PIN de ${member.name}`}
                           >
                             {revealedPins[member.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => handleCopyPin(e, member.id, member.pinCode!)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="p-1 text-[#5C665F] hover:text-[#1B2E24] dark:text-[#8A968F] dark:hover:text-[#EDEDE8] rounded-md transition-colors cursor-pointer"
                             title="Copiar PIN"
                             aria-label={`Copiar PIN de ${member.name}`}
                           >
@@ -658,21 +826,23 @@ export const MembersView: React.FC<MembersViewProps> = ({
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="md:hidden p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                              className="md:hidden p-1 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
                               title="WhatsApp"
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
                             </a>
                           )}
                           <button
+                            type="button"
                             onClick={(e) => handleSendPin(e, member)}
-                            className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="p-1 text-[#5C665F] hover:text-emerald-600 dark:text-[#8A968F] dark:hover:text-emerald-400 rounded-md transition-colors cursor-pointer"
                             title={member.contato ? `Enviar PIN para ${member.contato}` : "Membro sem telefone cadastrado"}
                             aria-label={`Enviar PIN para ${member.name}`}
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setPinConfirmModal({
@@ -681,7 +851,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                                 isRegenerate: true
                               });
                             }}
-                            className="hidden md:block p-1 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-slate-100 transition-colors opacity-0 group-hover/pin:opacity-100 focus:opacity-100 cursor-pointer"
+                            className="hidden md:block p-1 text-[#5C665F] hover:text-[#C2A267] dark:text-[#8A968F] dark:hover:text-[#C8A96E] rounded-md transition-colors cursor-pointer"
                             title="Regenerar PIN Único"
                             aria-label={`Regenerar PIN para ${member.name}`}
                           >
@@ -690,6 +860,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setPinConfirmModal({
@@ -698,7 +869,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                               isRegenerate: false
                             });
                           }}
-                          className="text-[11px] bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-md font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          className="text-xs bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#1B2E24]/20 dark:border-[#2A3A31] px-2.5 py-1 rounded-lg font-bold hover:bg-[#1B2E24]/20 transition-colors flex items-center gap-1 cursor-pointer"
                           aria-label={`Gerar PIN único para ${member.name}`}
                         >
                           <RefreshCw className="w-3 h-3" /> Gerar PIN
@@ -706,14 +877,15 @@ export const MembersView: React.FC<MembersViewProps> = ({
                       )}
                     </div>
 
-                    {/* Ações */}
+                    {/* Quick Row Actions */}
                     <div className="md:col-span-2 flex items-center justify-end gap-1">
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectMember(member);
                         }}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-indigo-700 hover:bg-slate-100 rounded-lg transition-all"
+                        className="p-2 md:p-1.5 text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#111614] rounded-lg transition-all cursor-pointer"
                         title="Ver Ficha Cadastral e Frequência"
                         aria-label={`Ver Ficha de ${member.name}`}
                       >
@@ -721,11 +893,12 @@ export const MembersView: React.FC<MembersViewProps> = ({
                       </button>
 
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartEdit(member);
                         }}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-indigo-700 hover:bg-slate-100 rounded-lg transition-all"
+                        className="p-2 md:p-1.5 text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#111614] rounded-lg transition-all cursor-pointer"
                         title="Editar Ficha Completa"
                         aria-label={`Editar Ficha de ${member.name}`}
                       >
@@ -733,12 +906,13 @@ export const MembersView: React.FC<MembersViewProps> = ({
                       </button>
 
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           setMemberToDelete(member.id);
                         }}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-rose-700 hover:bg-slate-100 rounded-lg transition-all"
+                        className="p-2 md:p-1.5 text-[#5C665F] dark:text-[#8A968F] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
                         title="Excluir Membro"
                         aria-label={`Excluir ${member.name}`}
                       >
@@ -752,29 +926,33 @@ export const MembersView: React.FC<MembersViewProps> = ({
           )}
         </div>
         
-        {/* Rodapé da Tabela */}
-        <div className="p-4 px-6 md:p-5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-400 bg-slate-50/40 uppercase tracking-wider">
-          <span>Exibindo {filteredMembers.length} de {members.length} membros</span>
-          <Users className="w-4 h-4 opacity-40" />
+        {/* Table Footer */}
+        <div className="p-4 px-6 md:p-5 border-t border-[#E4DFD5] dark:border-[#2A3A31] flex items-center justify-between text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] bg-[#FAF8F5] dark:bg-[#14231B] uppercase tracking-wider">
+          <span>Exibindo <span className="font-mono tabular-nums font-bold text-[#1B2E24] dark:text-[#EDEDE8]">{filteredMembers.length}</span> de <span className="font-mono tabular-nums font-bold text-[#1B2E24] dark:text-[#EDEDE8]">{members.length}</span> membros</span>
+          <Users className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
         </div>
       </div>
 
-      {/* Modal de Exclusão */}
+      {/* 5. Modal de Exclusão (Harmonized) */}
       {memberToDelete && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Remover Membro</h3>
-            <p className="text-slate-600 mb-6 text-sm">
-              ATENÇÃO: Este membro será excluído do sistema. Tem certeza que deseja continuar?
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] mb-2">
+              Remover Membro do Rol
+            </h3>
+            <p className="text-[#5C665F] dark:text-[#8A968F] mb-6 text-xs md:text-sm">
+              ATENÇÃO: Este membro será excluído do rol da sociedade. Tem certeza de que deseja continuar?
             </p>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setMemberToDelete(null)}
-                className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#2A3A31] font-bold rounded-xl hover:bg-[#E4DFD5]/50 transition-colors text-xs cursor-pointer"
               >
                 Voltar
               </button>
               <button
+                type="button"
                 onClick={async () => {
                   try {
                     await removeMember(memberToDelete);
@@ -784,7 +962,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     alert('Erro ao excluir membro.');
                   }
                 }}
-                className="flex-1 px-4 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors text-xs cursor-pointer shadow-2xs"
               >
                 Excluir
               </button>
@@ -793,24 +971,26 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
       )}
 
-      {/* Modal de Confirmação de PIN */}
+      {/* 6. Modal de Confirmação de PIN (Harmonized) */}
       {pinConfirmModal.show && pinConfirmModal.member && (
-        <div className="fixed inset-0 z-[65] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
+        <div className="fixed inset-0 z-[65] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] mb-2">
               {pinConfirmModal.isRegenerate ? 'Regenerar PIN Único' : 'Gerar PIN Único'}
             </h3>
-            <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-              Deseja {pinConfirmModal.isRegenerate ? 'substituir o PIN atual por um novo' : 'gerar um novo PIN único de 4 dígitos'} para <span className="font-bold text-slate-800">{pinConfirmModal.member.name}</span>?
+            <p className="text-[#5C665F] dark:text-[#8A968F] mb-6 text-xs md:text-sm leading-relaxed">
+              Deseja {pinConfirmModal.isRegenerate ? 'substituir o PIN atual por um novo' : 'gerar um novo PIN único de 4 dígitos'} para <span className="font-bold text-[#1B2E24] dark:text-[#EDEDE8]">{pinConfirmModal.member.name}</span>?
             </p>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setPinConfirmModal({ show: false, member: null, isRegenerate: false })}
-                className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#2A3A31] font-bold rounded-xl hover:bg-[#E4DFD5]/50 transition-colors text-xs cursor-pointer"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={async () => {
                   const member = pinConfirmModal.member;
                   if (member) {
@@ -829,7 +1009,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   }
                   setPinConfirmModal({ show: false, member: null, isRegenerate: false });
                 }}
-                className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm shadow-md shadow-indigo-600/20 cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] text-white dark:text-[#111614] font-bold rounded-xl transition-colors text-xs cursor-pointer shadow-2xs"
               >
                 Confirmar
               </button>
@@ -838,64 +1018,73 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
       )}
 
-      {/* Modal de Edição Completa da Ficha */}
+      {/* 7. Modal de Edição Completa da Ficha (Harmonized) */}
       {editingMember && (
-        <div className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-[2rem] max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+            <div className="p-5 border-b border-[#E4DFD5] dark:border-[#2A3A31] flex items-center justify-between bg-[#FAF8F5] dark:bg-[#14231B]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black">
+                <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 leading-tight">Editar Ficha do Membro</h3>
-                  <p className="text-xs text-slate-500 font-medium">{editingMember.name}</p>
+                  <h3 className="text-base md:text-lg font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] leading-tight">
+                    Editar Ficha do Membro
+                  </h3>
+                  <p className="text-xs text-[#5C665F] dark:text-[#8A968F] font-medium">{editingMember.name}</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setEditingMember(null)}
-                className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
+                className="p-2 hover:bg-[#E4DFD5]/50 dark:hover:bg-[#2A3A31] rounded-xl text-[#5C665F] dark:text-[#8A968F] transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleSaveEdit} className="overflow-y-auto flex-1 p-6 space-y-6">
+            <form onSubmit={handleSaveEdit} className="overflow-y-auto flex-1 p-5 md:p-6 space-y-6">
               {/* Seção 1: Identificação & UPH */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                  <ShieldCheck className="w-4 h-4" /> 1. Identificação Geral & UPH
+                <h4 className="text-xs font-bold uppercase text-[#1B2E24] dark:text-[#C8A96E] tracking-wider flex items-center gap-1.5 border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-1.5">
+                  <ShieldCheck className="w-4 h-4 text-[#C2A267]" /> 1. Identificação Geral & UPH
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <div className="md:col-span-6">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Nome Completo *</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Nome Completo *
+                    </label>
                     <input
                       type="text"
                       required
                       value={editFormData.name || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Cargo na UPH</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Cargo na UPH
+                    </label>
                     <input
                       type="text"
                       placeholder="Ex: Presidente, Sócio"
                       value={editFormData.cargo || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, cargo: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Entrada na UPH</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Entrada na UPH
+                    </label>
                     <input
                       type="date"
                       value={editFormData.uphEntryDate || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, uphEntryDate: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                 </div>
@@ -903,38 +1092,44 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
               {/* Seção 2: Contato & Endereço */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                  <Phone className="w-4 h-4" /> 2. Contato & Residência
+                <h4 className="text-xs font-bold uppercase text-[#1B2E24] dark:text-[#C8A96E] tracking-wider flex items-center gap-1.5 border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-1.5">
+                  <Phone className="w-4 h-4 text-[#C2A267]" /> 2. Contato & Residência
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Celular / WhatsApp</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Celular / WhatsApp
+                    </label>
                     <input
                       type="text"
                       placeholder="(95) 99123-4567"
                       value={editFormData.contato || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, contato: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">E-mail</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      E-mail
+                    </label>
                     <input
                       type="email"
                       placeholder="membro@email.com"
                       value={editFormData.email || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Endereço Completo</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Endereço Completo
+                    </label>
                     <input
                       type="text"
                       placeholder="Rua, Bairro, Nº"
                       value={editFormData.endereco || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                 </div>
@@ -942,45 +1137,53 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
               {/* Seção 3: Documentação & Pessoal */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                  <Calendar className="w-4 h-4" /> 3. Dados Pessoais & Documentos
+                <h4 className="text-xs font-bold uppercase text-[#1B2E24] dark:text-[#C8A96E] tracking-wider flex items-center gap-1.5 border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-1.5">
+                  <Calendar className="w-4 h-4 text-[#C2A267]" /> 3. Dados Pessoais & Documentos
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">CPF</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      CPF
+                    </label>
                     <input
                       type="text"
                       placeholder="000.000.000-00"
                       value={editFormData.cpf || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, cpf: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">RG</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      RG
+                    </label>
                     <input
                       type="text"
                       placeholder="Nº do RG"
                       value={editFormData.rg || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, rg: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Data de Nascimento</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Data de Nascimento
+                    </label>
                     <input
                       type="date"
                       value={editFormData.nascimento || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, nascimento: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E]"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Estado Civil</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Estado Civil
+                    </label>
                     <select
                       value={editFormData.estadoCivil || 'Casado'}
                       onChange={(e) => setEditFormData({ ...editFormData, estadoCivil: e.target.value as EstadoCivil })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     >
                       <option value="Casado">Casado</option>
                       <option value="Solteiro">Solteiro</option>
@@ -992,31 +1195,37 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2">
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Tipo Sanguíneo</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Tipo Sanguíneo
+                    </label>
                     <input
                       type="text"
                       placeholder="Ex: O+, A+"
                       value={editFormData.tipoSanguineo || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, tipoSanguineo: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Nome da Mãe</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Nome da Mãe
+                    </label>
                     <input
                       type="text"
                       value={editFormData.filiacaoMae || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, filiacaoMae: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Nome do Pai</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Nome do Pai
+                    </label>
                     <input
                       type="text"
                       value={editFormData.filiacaoPai || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, filiacaoPai: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     />
                   </div>
                 </div>
@@ -1024,16 +1233,18 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
               {/* Seção 4: Vida Eclesiástica */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                  <Landmark className="w-4 h-4" /> 4. Vida Eclesiástica & Igreja
+                <h4 className="text-xs font-bold uppercase text-[#1B2E24] dark:text-[#C8A96E] tracking-wider flex items-center gap-1.5 border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-1.5">
+                  <Landmark className="w-4 h-4 text-[#C2A267]" /> 4. Vida Eclesiástica & Igreja
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Função / Ofício</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Função / Ofício
+                    </label>
                     <select
                       value={editFormData.funcaoEclesiastica || 'Não se aplica'}
                       onChange={(e) => setEditFormData({ ...editFormData, funcaoEclesiastica: e.target.value as FuncaoEclesiastica })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     >
                       <option value="Não se aplica">Não se aplica</option>
                       <option value="Pastor">Pastor</option>
@@ -1044,11 +1255,13 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     </select>
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Situação Canônica</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Situação Canônica
+                    </label>
                     <select
                       value={editFormData.situacao || 'Em Plena Comunhão'}
                       onChange={(e) => setEditFormData({ ...editFormData, situacao: e.target.value as SituacaoMembro })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     >
                       <option value="Em Plena Comunhão">Em Plena Comunhão</option>
                       <option value="Sob Disciplina">Sob Disciplina</option>
@@ -1057,52 +1270,56 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     </select>
                   </div>
                   <div className="md:col-span-4 flex items-center pt-5 pl-2">
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
                       <input 
                         type="checkbox"
                         checked={!!editFormData.dizimista}
                         onChange={(e) => setEditFormData({ ...editFormData, dizimista: e.target.checked })}
-                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded text-[#1B2E24] dark:text-[#C8A96E] focus:ring-[#1B2E24]"
                       />
-                      Dizimista / Contribuinte Ativo
+                      Dizimista Ativo
                     </label>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2">
                   <div className="md:col-span-6">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Data de Batismo</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Data de Batismo
+                    </label>
                     <input
                       type="date"
                       value={editFormData.dataBatismo || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, dataBatismo: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     />
                   </div>
                   <div className="md:col-span-6">
-                    <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Data da Profissão de Fé</label>
+                    <label className="block text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider mb-1">
+                      Data da Profissão de Fé
+                    </label>
                     <input
                       type="date"
                       value={editFormData.dataProfissaoFe || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, dataProfissaoFe: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-3.5 py-2 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-semibold text-[#1B2E24] dark:text-[#EDEDE8]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Botões do Rodapé */}
-              <div className="flex gap-3 pt-4 border-t border-slate-100">
+              <div className="flex gap-3 pt-4 border-t border-[#E4DFD5] dark:border-[#2A3A31]">
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
-                  className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-xs uppercase tracking-wider"
+                  className="flex-1 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] font-bold rounded-xl hover:bg-[#E4DFD5]/50 transition-colors text-xs uppercase tracking-wider cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] font-bold rounded-xl transition-colors shadow-2xs text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Check className="w-4 h-4" /> Salvar Alterações
                 </button>
@@ -1112,13 +1329,44 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
       )}
 
-      {/* Modal de Alimentação via Markdown */}
+      {/* 8. Modal de Alimentação via Markdown */}
       {importMembersBatch && (
         <ImportMarkdownModal
           isOpen={showImportModal}
           onClose={() => setShowImportModal(false)}
           existingMembers={members}
-          onImportBatch={importMembersBatch}
+          onImportBatch={async (items, options) => {
+            // Adapts members payload to hook signature
+            const mapped = items.map(m => ({
+              name: m.name || '',
+              cargo: m.cargo || '',
+              uphEntryDate: m.uphEntryDate || '',
+              extraFields: {
+                funcaoEclesiastica: m.funcaoEclesiastica,
+                situacao: m.situacao,
+                contato: m.contato,
+                email: m.email,
+                endereco: m.endereco,
+                cpf: m.cpf,
+                rg: m.rg,
+                nascimento: m.nascimento,
+                estadoCivil: m.estadoCivil,
+                naturalidade: m.naturalidade,
+                tipoSanguineo: m.tipoSanguineo,
+                filiacaoMae: m.filiacaoMae,
+                filiacaoPai: m.filiacaoPai,
+                dataBatismo: m.dataBatismo,
+                dataProfissaoFe: m.dataProfissaoFe,
+                dizimista: m.dizimista
+              }
+            }));
+            await importMembersBatch(mapped);
+            return {
+              added: items.length,
+              updated: 0,
+              skipped: 0
+            };
+          }}
         />
       )}
     </div>

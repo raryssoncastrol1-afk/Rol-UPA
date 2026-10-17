@@ -183,6 +183,10 @@ export const localDB = {
     setItems(STORAGE_KEYS.SESSIONS, sessions);
   },
 
+  replaceAllSessions(allSessions: AttendanceSession[]): void {
+    setItems(STORAGE_KEYS.SESSIONS, allSessions);
+  },
+
   // --- Eleições ---
   getElections(): Election[] {
     return getItems<Election[]>(STORAGE_KEYS.ELECTIONS, []);
@@ -202,6 +206,10 @@ export const localDB = {
   deleteElection(id: string): void {
     const elections = this.getElections().filter(e => e.id !== id);
     setItems(STORAGE_KEYS.ELECTIONS, elections);
+  },
+
+  replaceAllElections(allElections: Election[]): void {
+    setItems(STORAGE_KEYS.ELECTIONS, allElections);
   },
 
   // --- Tesouraria ---
@@ -228,6 +236,10 @@ export const localDB = {
   deleteTransaction(id: string): void {
     const list = this.getTransactions().filter(t => t.id !== id);
     setItems(STORAGE_KEYS.TREASURY, list);
+  },
+
+  replaceAllTransactions(allTransactions: TreasuryTransaction[]): void {
+    setItems(STORAGE_KEYS.TREASURY, allTransactions);
   },
 
   // --- Autenticação Local Offline ---

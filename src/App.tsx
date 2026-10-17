@@ -7,11 +7,13 @@ import {
   LayoutDashboard,
   BarChart3,
   Gavel,
-  DollarSign
+  DollarSign,
+  Settings
 } from 'lucide-react';
 import { useMembers, useSessions, useTreasury } from './hooks/useData';
 import { AttendanceStatus, AttendanceRecord, Member, SessionType, AppUser } from './types';
 import { localDB } from './lib/offlineDB';
+import { syncClient } from './lib/syncClient';
 
 // Components
 import { Sidebar } from './components/Sidebar';
@@ -21,6 +23,8 @@ import { MembersView } from './components/MembersView';
 import { AttendanceView } from './components/AttendanceView';
 import { MemberHistoryModal } from './components/MemberHistoryModal';
 import { LoginScreen } from './components/LoginScreen';
+import { SettingsView } from './components/SettingsView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy-loaded heavy components (bundle splitting)
 const ReportsView = lazy(() => import('./components/ReportsView').then(m => ({ default: m.ReportsView })));
@@ -28,7 +32,7 @@ const StatisticsView = lazy(() => import('./components/StatisticsView').then(m =
 const VotingStation = lazy(() => import('./components/voting/VotingStation').then(m => ({ default: m.VotingStation })));
 const TreasuryView = lazy(() => import('./components/TreasuryView').then(m => ({ default: m.TreasuryView })));
 
-type View = 'dashboard' | 'members' | 'attendance' | 'reports' | 'statistics' | 'voting' | 'treasury';
+type View = 'dashboard' | 'members' | 'attendance' | 'reports' | 'statistics' | 'voting' | 'treasury' | 'settings';
 
 export default function App() {
   const [user, setUser] = useState<AppUser | null>(() => localDB.getCurrentUser());
@@ -46,16 +50,26 @@ export default function App() {
   // Global Theme
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('uph_theme_mode');
-    return saved === 'dark' ? 'dark' : 'light';
+    if (saved === 'dark' || saved === 'light') return saved;
+    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
     localStorage.setItem('uph_theme_mode', theme);
     const root = document.documentElement;
+    root.classList.remove('neobrutalism');
+    try { localStorage.removeItem('uph_ui_style'); } catch {}
     if (theme === 'dark') {
       root.classList.add('dark');
+      root.style.colorScheme = 'dark';
     } else {
       root.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    }
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#111614' : '#F6F4EF');
     }
   }, [theme]);
 
@@ -63,7 +77,7 @@ export default function App() {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 
-  const { members, addMember, removeMember, updateMember } = useMembers();
+  const { members, addMember, removeMember, updateMember, importMembersBatch } = useMembers();
   const { sessions, addSession, updateSession, removeSession } = useSessions();
   const { 
     transactions, 
@@ -229,6 +243,7 @@ export default function App() {
     { id: 'statistics', label: 'Estatísticas', icon: BarChart3 },
     { id: 'voting', label: 'Sistema de Votação', icon: Gavel },
     { id: 'treasury', label: 'Tesouraria', icon: DollarSign },
+    { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
   if (loading) {
@@ -323,15 +338,15 @@ export default function App() {
           onToggleTheme={toggleTheme}
         />
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="p-4 md:p-10"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="p-3 sm:p-5 md:p-10 w-full max-w-7xl mx-auto"
             >
               {activeView === 'dashboard' && (
                 <Dashboard 
@@ -348,6 +363,7 @@ export default function App() {
                   addMember={addMember} 
                   removeMember={removeMember} 
                   updateMember={updateMember}
+                  importMembersBatch={importMembersBatch}
                   onSelectMember={setSelectedMemberForHistory}
                 />
               )}
@@ -369,42 +385,77 @@ export default function App() {
                 />
               )}
 
-              <Suspense fallback={
-                <div className="h-64 flex items-center justify-center text-slate-400">Carregando módulo...</div>
-              }>
-                {activeView === 'reports' && (
-                  <ReportsView 
-                    sessions={sessions} 
-                    updateSession={updateSession}
-                    removeSession={removeSession} 
-                  />
-                )}
-
-                {activeView === 'statistics' && (
-                  <StatisticsView 
-                    members={members} 
-                    sessions={sessions} 
-                  />
-                )}
-
-                {activeView === 'voting' && (
-                  <VotingStation societyId="uph-society-id" />
-                )}
-
-                {activeView === 'treasury' && (
-                  <TreasuryView 
+              <ErrorBoundary fallbackTitle="Erro ao carregar módulo">
+                {activeView === 'settings' && (
+                  <SettingsView
+                    members={members}
+                    sessions={sessions}
                     transactions={transactions}
-                    addTransaction={addTransaction}
-                    addTransactionsBatch={addTransactionsBatch}
-                    removeTransaction={removeTransaction}
+                    onRefreshAll={() => {
+                      window.location.reload();
+                    }}
                   />
                 )}
-              </Suspense>
+
+                <Suspense fallback={
+                  <div className="h-64 flex items-center justify-center text-slate-400">Carregando módulo...</div>
+                }>
+                  {activeView === 'reports' && (
+                    <ReportsView 
+                      sessions={sessions} 
+                      updateSession={updateSession}
+                      removeSession={removeSession} 
+                    />
+                  )}
+
+                  {activeView === 'statistics' && (
+                    <StatisticsView 
+                      members={members} 
+                      sessions={sessions} 
+                    />
+                  )}
+
+                  {activeView === 'voting' && (
+                    <VotingStation societyId="uph-society-id" />
+                  )}
+
+                  {activeView === 'treasury' && (
+                    <TreasuryView 
+                      transactions={transactions}
+                      addTransaction={addTransaction}
+                      addTransactionsBatch={addTransactionsBatch}
+                      removeTransaction={removeTransaction}
+                    />
+                  )}
+                </Suspense>
+              </ErrorBoundary>
 
 
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <nav className="md:hidden flex items-center justify-around bg-white dark:bg-[#18221D] border-t border-[#E4DFD5] dark:border-[#2A3A31] px-1 py-1.5 shrink-0 z-20 shadow-lg">
+          {navItems.filter(item => item.id !== 'statistics').map(item => {
+            const isActive = activeView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id as View)}
+                aria-label={item.label}
+                className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition-all cursor-pointer ${
+                  isActive 
+                    ? 'text-[#1B2E24] dark:text-[#C8A96E] font-bold' 
+                    : 'text-[#5C665F] dark:text-[#8A968F]'
+                }`}
+              >
+                <item.icon className={`w-5 h-5 mb-0.5 ${isActive ? 'text-[#1B2E24] dark:text-[#C8A96E]' : ''}`} />
+                <span className="text-[10px] tracking-tight truncate max-w-[54px]">{item.label.split(' ')[0]}</span>
+              </button>
+            );
+          })}
+        </nav>
       </main>
 
       <MemberHistoryModal 

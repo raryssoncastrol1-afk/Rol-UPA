@@ -535,9 +535,9 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <button onClick={() => setMode('list')} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+            <button onClick={() => setMode('list')} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800 text-xs sm:text-sm">
               <ArrowLeft className="w-4 h-4" /> Sair
             </button>
             {!activeElection.archived && (
@@ -546,7 +546,7 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                   e.preventDefault();
                   setShowCancelConfirm(true);
                 }}
-                className="flex items-center gap-2 text-rose-600 font-bold hover:text-rose-800"
+                className="flex items-center gap-2 text-rose-600 font-bold hover:text-rose-800 text-xs sm:text-sm"
               >
                 <X className="w-4 h-4" /> Cancelar Eleição
               </button>
@@ -556,21 +556,21 @@ export const VotingStation: React.FC<VotingStationProps> = ({ voterMemberId }) =
                 e.preventDefault();
                 setShowDeleteConfirm(true);
               }}
-              className="flex items-center gap-2 text-red-600 font-bold hover:text-red-800 ml-4 font-sans"
+              className="flex items-center gap-2 text-red-600 font-bold hover:text-red-800 text-xs sm:text-sm"
             >
               <Trash2 className="w-4 h-4" /> Excluir
             </button>
             {activeElection.votes && activeElection.votes.length > 0 && (
               <button 
                 onClick={() => setShowReportElectionId(activeElection.id)} 
-                className="flex items-center gap-1.5 text-emerald-700 font-sans font-bold hover:text-emerald-900 ml-4 border-l border-slate-200 pl-4 text-sm"
+                className="flex items-center gap-1.5 text-emerald-700 font-sans font-bold hover:text-emerald-900 border-l border-slate-200 pl-3 text-xs sm:text-sm"
                 title="Visualizar Relatório de Eleição"
               >
                 <FileText className="w-4 h-4 text-emerald-600" /> Relatório
               </button>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {!activeElection.archived && (
               <button
                 onClick={() => setShowMesaMenu(!showMesaMenu)}

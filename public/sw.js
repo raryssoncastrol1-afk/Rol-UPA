@@ -2,7 +2,8 @@ const CACHE_NAME = 'uph-rol-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/uph-logo-oficial.jpg'
 ];
 
 self.addEventListener('install', (event) => {

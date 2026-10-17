@@ -1,8 +1,7 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { Plus, UserPlus, ClipboardCheck, FileText, ChevronRight, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Member, AttendanceSession } from '../types';
+import { Member, AttendanceSession, TreasuryTransaction } from '../types';
 import { generateReport } from '../lib/report';
 
 interface DashboardProps {
@@ -14,6 +13,7 @@ interface DashboardProps {
     lastAbsentCount: number;
     totalSessions: number;
   };
+  transactions?: TreasuryTransaction[];
   onNavigate: (view: any) => void;
 }
 
@@ -125,3 +125,5 @@ export const Dashboard: React.FC<DashboardProps> = ({ members, sessions, stats, 
     </div>
   );
 };
+
+export default Dashboard;

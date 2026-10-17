@@ -33,24 +33,24 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-white rounded-3xl border border-rose-100 shadow-sm my-4">
-          <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-4">
-            <AlertTriangle className="w-7 h-7" />
+        <div className="flex flex-col items-center justify-center min-h-[45vh] p-8 text-center bg-white dark:bg-[#18221D] rounded-2xl border border-rose-200 dark:border-rose-900/40 shadow-xs my-4">
+          <div className="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">
+          <h3 className="text-lg font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] mb-2">
             {this.props.fallbackTitle || 'Não foi possível carregar este módulo'}
           </h3>
-          <p className="text-slate-500 text-sm max-w-md mb-6 leading-relaxed">
-            Ocorreu uma inconsistência temporária ou erro ao baixar os recursos necessários desta seção.
+          <p className="text-[#5C665F] dark:text-[#8A968F] text-xs max-w-md mb-5 leading-relaxed">
+            Ocorreu uma inconsistência temporária ao carregar esta seção. Você pode tentar recarregar o módulo abaixo.
           </p>
           {this.state.error && (
-            <div className="bg-slate-50 text-slate-600 text-xs font-mono p-3 rounded-xl mb-6 max-w-lg overflow-x-auto text-left border border-slate-200">
+            <div className="bg-[#FAF8F5] dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] text-xs font-mono p-3 rounded-xl mb-5 max-w-lg overflow-x-auto text-left border border-[#E4DFD5] dark:border-[#2A3A31]">
               {this.state.error.message || String(this.state.error)}
             </div>
           )}
           <button
             onClick={this.handleReset}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" /> Recarregar Módulo
           </button>
@@ -61,3 +61,4 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+

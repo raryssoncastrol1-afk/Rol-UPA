@@ -1,21 +1,18 @@
 {
-  "name": "UPH Rol - Gestão e Eleições",
-  "short_name": "UPH Rol",
-  "description": "Sistema de gestão e votação em plenária da UPH 3ª IPBV",
+  "name": "UPH 3ª IPBV - Gestão e Eleições",
+  "short_name": "UPH 3ª IPBV",
+  "description": "Sistema de gestão de rol de membros, chamada, eleições plenárias e tesouraria da UPH 3ª IPBV",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#111614",
+  "theme_color": "#1B2E24",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/uph-logo-oficial.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
+

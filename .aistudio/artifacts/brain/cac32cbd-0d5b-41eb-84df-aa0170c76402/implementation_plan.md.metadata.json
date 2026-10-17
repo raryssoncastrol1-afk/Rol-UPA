@@ -1,0 +1,6 @@
+{
+  "summary": "Plano de implementação da nova página de Configurações do Sistema com alteração de senha de administrador, exportação de backups modulares em arquivos JSON individuais (membros, frequência, tesouraria, eleições) e restauração direta via upload.",
+  "updatedAt": "2026-10-14T18:31:00.279107941Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

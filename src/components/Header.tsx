@@ -33,13 +33,14 @@ export const Header: React.FC<HeaderProps> = ({
     reports: 'Relatórios e Histórico',
     statistics: 'Estatísticas de Frequência',
     voting: 'Sistema de Votação',
-    treasury: 'Tesouraria e Finanças'
+    treasury: 'Tesouraria e Finanças',
+    settings: 'Configurações do Sistema'
   };
 
   return (
-    <header className="h-20 bg-white dark:bg-[#18221D] border-b border-[#E4DFD5] dark:border-[#2A3A31] px-6 md:px-10 flex items-center justify-between shrink-0 z-10 sticky top-0 transition-colors duration-200 shadow-2xs">
-      <div>
-        <h2 className="text-xl md:text-2xl font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">
+    <header className="h-20 bg-white dark:bg-[#18221D] border-b border-[#E4DFD5] dark:border-[#2A3A31] px-4 sm:px-6 md:px-10 flex items-center justify-between shrink-0 z-10 sticky top-0 transition-colors duration-200 shadow-2xs">
+      <div className="min-w-0 pr-2">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight truncate">
           {titles[activeView]}
         </h2>
         <div className="hidden md:flex items-center gap-2 mt-0.5">
@@ -49,14 +50,17 @@ export const Header: React.FC<HeaderProps> = ({
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Toggle Claro/Escuro */}
         <button
-          onClick={onToggleTheme}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleTheme();
+          }}
           type="button"
           aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
           title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
-          className="p-2.5 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-white/80 dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:border-[#1B2E24]/30 dark:hover:border-[#C8A96E]/40 transition-all cursor-pointer flex items-center justify-center shadow-2xs"
+          className="min-w-[42px] min-h-[42px] p-2.5 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-white dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:border-[#1B2E24]/30 dark:hover:border-[#C8A96E]/40 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-2xs relative z-20"
         >
           {theme === 'dark' ? (
             <Sun className="w-4 h-4 text-[#C8A96E]" />
@@ -76,30 +80,16 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="sm:hidden">Salvar</span>
           </button>
         )}
-        <div className="md:hidden flex items-center bg-[#F6F4EF] dark:bg-[#111614] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31]">
-           {navItems.filter(item => item.id !== 'statistics').map(item => (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              aria-label={`Navegar para ${item.label}`}
-              className={`min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl transition-all ${
-                activeView === item.id 
-                ? 'bg-white dark:bg-[#18221D] text-[#1B2E24] dark:text-[#C8A96E] shadow-2xs' 
-                : 'text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-            </button>
-          ))}
-          <button
-            onClick={onLogout}
-            aria-label="Sair do sistema"
-            className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all"
-            title="Sair"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
+        {/* Botão Sair no Mobile */}
+        <button
+          onClick={onLogout}
+          type="button"
+          aria-label="Sair do sistema"
+          title="Sair do sistema"
+          className="md:hidden min-w-[42px] min-h-[42px] p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/70 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-all cursor-pointer flex items-center justify-center shadow-2xs"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );

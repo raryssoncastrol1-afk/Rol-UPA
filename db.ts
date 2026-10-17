@@ -1,14 +1,12 @@
 import { createClient } from "@libsql/client";
 import path from "path";
 
-// Se TURSO_DATABASE_URL e TURSO_AUTH_TOKEN existirem, conecta ao Turso na nuvem.
-// Caso contrário, usa arquivo SQLite local "file:uph_data.db" no próprio diretório.
-const dbUrl = process.env.TURSO_DATABASE_URL || `file:${path.join(process.cwd(), "uph_data.db")}`;
-const authToken = process.env.TURSO_AUTH_TOKEN;
+// O sistema utiliza banco de dados SQLite local embutido ("uph_data.db").
+// Não necessita de nenhum serviço externo, token ou cadastro na nuvem.
+const dbUrl = process.env.DATABASE_URL || `file:${path.join(process.cwd(), "uph_data.db")}`;
 
 export const db = createClient({
   url: dbUrl,
-  authToken: authToken,
 });
 
 export async function initDatabase() {

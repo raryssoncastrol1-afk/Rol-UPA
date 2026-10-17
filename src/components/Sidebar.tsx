@@ -54,9 +54,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, nav
       </div>
       
       <div className="mt-auto p-8 relative z-10">
-        <div className="bg-[#18221D] p-3.5 rounded-xl border border-[#2A3A31] mb-3">
-          <p className="text-[9px] text-[#8A968F] uppercase font-semibold tracking-wider mb-0.5">Operador Atual</p>
-          <p className="text-sm text-[#EDEDE8] font-medium truncate">{user?.name || 'Administrador'}</p>
+        <div 
+          onClick={() => setActiveView('settings')}
+          className="bg-[#18221D] p-3.5 rounded-xl border border-[#2A3A31] mb-3 hover:border-[#C8A96E]/50 hover:bg-[#202C26] transition-all cursor-pointer group"
+          title="Abrir Configurações do Sistema"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] text-[#8A968F] uppercase font-semibold tracking-wider mb-0.5">Operador Atual</p>
+            <span className="text-[10px] text-[#C8A96E] opacity-0 group-hover:opacity-100 transition-opacity font-medium">Ajustes →</span>
+          </div>
+          <p className="text-sm text-[#EDEDE8] font-medium truncate group-hover:text-[#FAF8F5]">{user?.name || 'Administrador'}</p>
         </div>
         <button 
           onClick={onLogout}

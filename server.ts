@@ -43,6 +43,24 @@ async function startServer() {
     }
   });
 
+  app.post("/api/elections/batch", async (req, res) => {
+    try {
+      const elections = req.body;
+      if (!Array.isArray(elections)) {
+        return res.status(400).json({ error: "Lista inválida" });
+      }
+      for (const el of elections) {
+        await db.execute({
+          sql: "INSERT OR REPLACE INTO elections (id, data, updated_at) VALUES (?, ?, ?)",
+          args: [el.id, JSON.stringify(el), Date.now()],
+        });
+      }
+      res.json({ success: true, count: elections.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Voto emitido por eleitor (atômico e seguro)
   app.post("/api/elections/:id/vote", async (req, res) => {
     try {
@@ -219,6 +237,24 @@ async function startServer() {
     }
   });
 
+  app.post("/api/sessions/batch", async (req, res) => {
+    try {
+      const sessions = req.body;
+      if (!Array.isArray(sessions)) {
+        return res.status(400).json({ error: "Lista inválida" });
+      }
+      for (const s of sessions) {
+        await db.execute({
+          sql: "INSERT OR REPLACE INTO sessions (id, data, updated_at) VALUES (?, ?, ?)",
+          args: [s.id, JSON.stringify(s), Date.now()],
+        });
+      }
+      res.json({ success: true, count: sessions.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.delete("/api/sessions/:id", async (req, res) => {
     try {
       await db.execute({
@@ -251,6 +287,24 @@ async function startServer() {
         args: [tx.id, JSON.stringify(tx), Date.now()],
       });
       res.json({ success: true, tx });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/treasury/batch", async (req, res) => {
+    try {
+      const items = req.body;
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: "Lista inválida" });
+      }
+      for (const tx of items) {
+        await db.execute({
+          sql: "INSERT OR REPLACE INTO treasury (id, data, updated_at) VALUES (?, ?, ?)",
+          args: [tx.id, JSON.stringify(tx), Date.now()],
+        });
+      }
+      res.json({ success: true, count: items.length });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

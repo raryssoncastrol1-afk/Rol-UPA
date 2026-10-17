@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { localDB } from '../../lib/offlineDB';
-import { Member, Role, Vote, Election } from '../../types';
-import { Sparkles, Users, UserCheck, Play, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { 
+  Calculator, 
+  ChevronDown, 
+  ChevronUp, 
+  AlertCircle, 
+  Trophy, 
+  Users, 
+  CheckCircle2, 
+  RotateCcw,
+  Sparkles
+} from 'lucide-react';
+import { Election, Member, Role } from '../../types';
+import { ROLE_NAMES } from '../../lib/electionUtils';
 import { formatMemberNameWithTitle } from '../../lib/memberUtils';
 
 interface VotingSimulatorProps {
@@ -10,7 +20,6 @@ interface VotingSimulatorProps {
   presentMembers: Member[];
   pendingMembers: Member[];
   electedMemberIds: string[];
-  onVoteCast?: () => void;
 }
 
 export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
@@ -20,291 +29,150 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
   pendingMembers,
   electedMemberIds,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedVoterId, setSelectedVoterId] = useState('');
-  const [selectedCandidateId, setSelectedCandidateId] = useState('');
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationPreset, setSimulationPreset] = useState<'random' | 'majority'>('random');
-  const [targetWinnerId, setTargetWinnerId] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const currentRole = activeElection.currentRole;
-  const currentBallot = activeElection.currentBallot;
+  // Computa votos do escrutínio atual para o cargo em disputa
+  const currentVotes = useMemo(() => {
+    return (activeElection.votes || []).filter(
+      v => v.role === activeElection.currentRole && v.ballotNumber === activeElection.currentBallot
+    );
+  }, [activeElection]);
 
-  // Determine the eligible candidates list based on active ballot rules
-  const declinedMembers = activeElection.declinedMembers || [];
-  const registeredCandidates = activeElection.registeredCandidates || [];
+  const presentCount = activeElection.presentCount || presentMembers.length || 0;
+  const majorityRequired = Math.floor(presentCount / 2) + 1;
+  const remainingVotes = Math.max(0, presentCount - currentVotes.length);
 
-  let candidatesList = presentMembers.filter(
-    m => !declinedMembers.includes(m.id) && !electedMemberIds.includes(m.id)
-  );
+  // Contagem de votos por candidato
+  const voteCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    currentVotes.forEach(v => {
+      counts[v.candidateId] = (counts[v.candidateId] || 0) + 1;
+    });
 
-  // Apply ballot 3 runoff limits (top 2 only)
-  if (currentBallot === 3 && activeElection.candidatesIds && activeElection.candidatesIds.length > 0) {
-    candidatesList = candidatesList.filter(m => activeElection.candidatesIds!.includes(m.id));
-  } else if (registeredCandidates.length > 0) {
-    // Apply registered candidates limit
-    candidatesList = candidatesList.filter(m => registeredCandidates.includes(m.id));
-  }
+    return Object.entries(counts)
+      .map(([candidateId, votes]) => {
+        const member = members.find(m => m.id === candidateId);
+        return {
+          candidateId,
+          name: member ? formatMemberNameWithTitle(member) : candidateId,
+          votes,
+          percentage: currentVotes.length > 0 ? (votes / currentVotes.length) * 100 : 0,
+        };
+      })
+      .sort((a, b) => b.votes - a.votes);
+  }, [currentVotes, members]);
 
-  // Cast a single manual vote on behalf of a member
-  const handleSingleSimulatedVote = async () => {
-    if (!selectedVoterId || !selectedCandidateId) return;
-    setIsSimulating(true);
+  const leader = voteCounts[0] || null;
+  const second = voteCounts[1] || null;
 
-    try {
-      const newVote: Vote = {
-        voterId: selectedVoterId,
-        candidateId: selectedCandidateId,
-        role: currentRole,
-        ballotNumber: currentBallot,
-        timestamp: Date.now()
-      };
-
-      const currentElection = localDB.getElections().find(e => e.id === activeElection.id) || activeElection;
-      localDB.saveElection({
-        ...currentElection,
-        votes: [...(currentElection.votes || []), newVote]
-      });
-
-      setSelectedVoterId('');
-      setSelectedCandidateId('');
-    } catch (err) {
-      console.error('Error simulating voting:', err);
-    } finally {
-      setIsSimulating(false);
-    }
-  };
-
-  // Run the batch simulation for all remaining pending members
-  const handleBatchSimulation = async () => {
-    if (pendingMembers.length === 0) {
-      alert('Não há mais votantes pendentes nesta rodada!');
-      return;
-    }
-    if (candidatesList.length === 0) {
-      alert('Não há candidatos elegíveis disponíveis para receber os votos!');
-      return;
-    }
-
-    if (simulationPreset === 'majority' && !targetWinnerId) {
-      alert('Selecione quem será o vencedor da maioria!');
-      return;
-    }
-
-    setIsSimulating(true);
-    try {
-      const simulatedVotes: Vote[] = [];
-
-      pendingMembers.forEach((voter) => {
-        let chosenCandidateId = '';
-
-        if (simulationPreset === 'majority' && targetWinnerId) {
-          // 70% probability for the chosen candidate to win absolute majority, 
-          // 30% split across others to simulate realistic split voting
-          if (Math.random() < 0.70) {
-            chosenCandidateId = targetWinnerId;
-          } else {
-            const alternativeCandidates = candidatesList.filter(c => c.id !== targetWinnerId);
-            if (alternativeCandidates.length > 0) {
-              const randomIdx = Math.floor(Math.random() * alternativeCandidates.length);
-              chosenCandidateId = alternativeCandidates[randomIdx].id;
-            } else {
-              chosenCandidateId = targetWinnerId;
-            }
-          }
-        } else {
-          // Fully random vote distribution among all available candidates
-          const randomIdx = Math.floor(Math.random() * candidatesList.length);
-          chosenCandidateId = candidatesList[randomIdx].id;
-        }
-
-        simulatedVotes.push({
-          voterId: voter.id,
-          candidateId: chosenCandidateId,
-          role: currentRole,
-          ballotNumber: currentBallot,
-          timestamp: Date.now() + Math.floor(Math.random() * 1000) // spread millisecond offsets
-        });
-      });
-
-      // Atomically update election with all votes
-      const currentElection = localDB.getElections().find(e => e.id === activeElection.id) || activeElection;
-      localDB.saveElection({
-        ...currentElection,
-        votes: [...(currentElection.votes || []), ...simulatedVotes]
-      });
-
-    } catch (err) {
-      console.error('Error executing batch simulation:', err);
-      alert('Erro ao realizar a simulação automática. Verifique os logs.');
-    } finally {
-      setIsSimulating(false);
-    }
-  };
+  // Análise da situação atual
+  const leaderHasMajority = leader && leader.votes >= majorityRequired;
+  const leaderCanWinNow = leader && (leader.votes + remainingVotes >= majorityRequired);
 
   return (
-    <div className="bg-amber-50/50 border border-amber-200 rounded-3xl p-5 shadow-sm space-y-4">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-left focus:outline-none"
+    <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-slate-200 dark:border-[#2A3A31] shadow-xs space-y-3">
+      <div 
+        onClick={() => setIsExpanded(prev => !prev)}
+        className="flex items-center justify-between cursor-pointer select-none"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
+            <Calculator className="w-4 h-4" />
+          </div>
           <div>
-            <h4 className="font-extrabold text-xs uppercase tracking-wider text-amber-800">
-              Simulador de Votos (Modo Teste)
+            <h4 className="font-bold text-xs text-slate-800 dark:text-[#EDEDE8] flex items-center gap-1.5">
+              Simulador de Escrutínio
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-mono">
+                {activeElection.currentBallot}º Turno
+              </span>
             </h4>
-            <p className="text-[10px] text-amber-600 font-medium">Escreva votos fictícios para testes rápidos</p>
+            <p className="text-[10px] text-slate-500 dark:text-[#8A968F]">
+              Projeção matemática para maioria absoluta
+            </p>
           </div>
         </div>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-amber-700" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-amber-700" />
-        )}
-      </button>
 
-      {isOpen && (
-        <div className="space-y-4 pt-2 border-t border-amber-200/60 text-sm animate-in fade-in duration-300">
-          
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-2 bg-white/70 p-3 rounded-2xl border border-amber-100/50">
-            <div className="text-center">
-              <span className="block text-[10px] uppercase font-bold text-slate-400">Total Presentes</span>
-              <span className="font-mono text-base font-black text-slate-700">{presentMembers.length}</span>
-            </div>
-            <div className="text-center border-x border-amber-100/70">
-              <span className="block text-[10px] uppercase font-bold text-slate-400">Votos Confirmados</span>
-              <span className="font-mono text-base font-black text-emerald-600">
-                {activeElection.votes.filter(v => v.role === currentRole && v.ballotNumber === currentBallot).length}
-              </span>
-            </div>
-            <div className="text-center">
-              <span className="block text-[10px] uppercase font-bold text-slate-400">Pendente Votar</span>
-              <span className="font-mono text-base font-black text-amber-600">{pendingMembers.length}</span>
-            </div>
-          </div>
+        <button 
+          type="button" 
+          aria-label={isExpanded ? "Recolher simulador" : "Expandir simulador"}
+          className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+        >
+          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
 
-          {/* Dev Notice */}
-          <div className="bg-amber-100/40 text-amber-900 leading-relaxed text-[10px] p-3 rounded-2xl border border-amber-100">
-            <span className="font-bold flex items-center gap-1.5 text-[11px] mb-1">
-              <HelpCircle className="w-3.5 h-3.5 shrink-0" /> Como deletar esse componente?
+      {/* Visão Rápida (sempre visível) */}
+      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-[#2A3A31] text-center">
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+          <span className="text-[10px] text-slate-400 block font-semibold">Exigido</span>
+          <span className="text-sm font-mono font-bold text-slate-700 dark:text-[#EDEDE8]">{majorityRequired}</span>
+          <span className="text-[9px] text-slate-400 block">votos (50%+1)</span>
+        </div>
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+          <span className="text-[10px] text-slate-400 block font-semibold">Urna</span>
+          <span className="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">{currentVotes.length}</span>
+          <span className="text-[9px] text-slate-400 block">computados</span>
+        </div>
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+          <span className="text-[10px] text-slate-400 block font-semibold">Pendentes</span>
+          <span className="text-sm font-mono font-bold text-amber-600 dark:text-amber-400">{pendingMembers.length}</span>
+          <span className="text-[9px] text-slate-400 block">a votar</span>
+        </div>
+      </div>
+
+      {/* Projeção Atual */}
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-200/60 dark:border-[#2A3A31] text-xs">
+        {leaderHasMajority ? (
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>
+              <strong>{leader.name}</strong> já alcançou a maioria absoluta ({leader.votes}/{majorityRequired}) e está eleito.
             </span>
-            Este simulador é 100% autossuficiente e está implementado apenas no arquivo 
-            <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[9px] mx-1">VotingSimulator.tsx</code>. 
-            Para retirá-lo de vez antes de lançar em produção, basta deletá-lo do projeto e remover sua tag no painel do administrador.
           </div>
+        ) : leaderCanWinNow ? (
+          <div className="flex items-start gap-2 text-slate-600 dark:text-[#8A968F]">
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <span>
+              Líder: <strong>{leader?.name}</strong> com {leader?.votes} votos. Necessita de mais{' '}
+              <strong>{majorityRequired - (leader?.votes || 0)}</strong> voto(s) dos {remainingVotes} pendentes.
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 text-slate-600 dark:text-[#8A968F]">
+            <AlertCircle className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+            <span>
+              Nenhum candidato atingiu {majorityRequired} votos ainda.{' '}
+              {activeElection.currentBallot < 3 ? 'Poderá haver novo escrutínio.' : 'Vencedor decidido por maioria simples ou critérios estatutários.'}
+            </span>
+          </div>
+        )}
+      </div>
 
-          {pendingMembers.length === 0 ? (
-            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
-              <UserCheck className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
-              <p className="text-xs font-bold text-emerald-800">Todos os sócios votaram!</p>
-              <p className="text-[10px] text-emerald-600 mt-0.5">Avance o escrutínio ou conclua o cargo no painel acima.</p>
-            </div>
+      {/* Detalhes Expandidos */}
+      {isExpanded && (
+        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-[#2A3A31]">
+          <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Parcial do Escrutínio
+          </h5>
+
+          {voteCounts.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">Nenhum voto depositado ainda neste escrutínio.</p>
           ) : (
-            <>
-              {/* Option 1: Complete remaining votes in batch */}
-              <div className="p-4 bg-white rounded-2xl border border-amber-100 space-y-3.5 shadow-sm">
-                <span className="font-black text-[10px] uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Votação Rápida em Lote
-                </span>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setSimulationPreset('random')}
-                    className={`px-3 py-2 text-[11px] font-bold rounded-xl border transition-all ${
-                      simulationPreset === 'random'
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    Votos Aleatórios
-                  </button>
-                  <button
-                    onClick={() => setSimulationPreset('majority')}
-                    className={`px-3 py-2 text-[11px] font-bold rounded-xl border transition-all ${
-                      simulationPreset === 'majority'
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    Votos com Vencedor
-                  </button>
+            <div className="space-y-2">
+              {voteCounts.map((cand, idx) => (
+                <div key={cand.candidateId} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 overflow-hidden mr-2">
+                    <span className="font-mono text-[10px] text-slate-400 w-4">{idx + 1}º</span>
+                    <span className="font-semibold text-slate-700 dark:text-[#EDEDE8] truncate">{cand.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono font-bold text-slate-800 dark:text-[#EDEDE8]">{cand.votes} votos</span>
+                    <span className="text-[10px] text-slate-400 font-mono">({cand.percentage.toFixed(0)}%)</span>
+                  </div>
                 </div>
-
-                {simulationPreset === 'majority' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Escolher Favorito (votos direcionados)</label>
-                    <select
-                      value={targetWinnerId}
-                      onChange={(e) => setTargetWinnerId(e.target.value)}
-                      className="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    >
-                      <option value="">Selecione o candidato favorito...</option>
-                      {candidatesList.map(c => (
-                        <option key={c.id} value={c.id}>{formatMemberNameWithTitle(c)}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleBatchSimulation}
-                  disabled={isSimulating}
-                  className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm disabled:opacity-50"
-                >
-                  <Play className="w-3.5 h-3.5 animate-pulse" />
-                  Simular Restantes ({pendingMembers.length} Votos)
-                </button>
-              </div>
-
-              {/* Option 2: Cast step-by-step manual votes representing other members */}
-              <div className="p-4 bg-white rounded-2xl border border-amber-100 space-y-3 shadow-sm">
-                <span className="font-black text-[10px] uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" /> Voto Manual Simulado
-                </span>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-400">Votar como:</label>
-                    <select
-                      value={selectedVoterId}
-                      onChange={(e) => setSelectedVoterId(e.target.value)}
-                      className="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    >
-                      <option value="">Selecione o sócio ausente/pendente...</option>
-                      {pendingMembers.map(m => (
-                        <option key={m.id} value={m.id}>{formatMemberNameWithTitle(m)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-400">Candidato Escolhido:</label>
-                    <select
-                      value={selectedCandidateId}
-                      onChange={(e) => setSelectedCandidateId(e.target.value)}
-                      className="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    >
-                      <option value="">Selecione o candidato...</option>
-                      {candidatesList.map(c => (
-                        <option key={c.id} value={c.id}>{formatMemberNameWithTitle(c)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <button
-                    onClick={handleSingleSimulatedVote}
-                    disabled={isSimulating || !selectedVoterId || !selectedCandidateId}
-                    className="w-full h-10 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
-                  >
-                    Confirmar Voto Simulado
-                  </button>
-                </div>
-              </div>
-            </>
+              ))}
+            </div>
           )}
-
         </div>
       )}
     </div>

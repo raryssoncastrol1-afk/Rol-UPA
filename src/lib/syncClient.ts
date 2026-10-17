@@ -170,6 +170,17 @@ export const syncClient = {
     localDB.saveSession(session);
   },
 
+  async pushSessionsBatch(sessions: AttendanceSession[]): Promise<void> {
+    try {
+      await fetch('/api/sessions/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessions)
+      });
+    } catch {}
+    localDB.replaceAllSessions(sessions);
+  },
+
   async deleteSession(id: string): Promise<void> {
     const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Falha ao excluir sessão no servidor.');
@@ -201,9 +212,31 @@ export const syncClient = {
     localDB.saveTransaction(tx);
   },
 
+  async pushTreasuryBatch(transactions: TreasuryTransaction[]): Promise<void> {
+    try {
+      await fetch('/api/treasury/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transactions)
+      });
+    } catch {}
+    localDB.replaceAllTransactions(transactions);
+  },
+
   async deleteTransaction(id: string): Promise<void> {
     const res = await fetch(`/api/treasury/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Falha ao excluir transação no servidor.');
     localDB.deleteTransaction(id);
+  },
+
+  async pushElectionsBatch(elections: Election[]): Promise<void> {
+    try {
+      await fetch('/api/elections/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(elections)
+      });
+    } catch {}
+    localDB.replaceAllElections(elections);
   }
 };
