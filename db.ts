@@ -1,9 +1,9 @@
 import { createClient } from "@libsql/client";
 import path from "path";
 
-// O sistema utiliza banco de dados SQLite local embutido ("uph_data.db").
+// O sistema utiliza banco de dados SQLite local embutido ("upa_data.db").
 // Não necessita de nenhum serviço externo, token ou cadastro na nuvem.
-const dbUrl = process.env.DATABASE_URL || `file:${path.join(process.cwd(), "uph_data.db")}`;
+const dbUrl = process.env.DATABASE_URL || `file:${path.join(process.cwd(), "upa_data.db")}`;
 
 export const db = createClient({
   url: dbUrl,
@@ -42,5 +42,5 @@ export async function initDatabase() {
     );
   `);
 
-  console.log(`[Database] SQLite/LibSQL conectado com sucesso em: ${dbUrl}`);
+  console.log(`[Database UPA] SQLite/LibSQL conectado com sucesso em: ${dbUrl}`);
 }

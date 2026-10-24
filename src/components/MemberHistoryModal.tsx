@@ -31,7 +31,8 @@ import {
   formatPhone, 
   gerarWhatsAppUrl, 
   formatDateBR,
-  stripEcclesiasticalTitle 
+  stripEcclesiasticalTitle,
+  getStatusFaixaEtariaUPA 
 } from '../lib/memberUtils';
 import { activePinDispatcher } from '../lib/pinDispatcher';
 import { 
@@ -109,7 +110,9 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
   const frequencyJustified = totalSessions > 0 ? Math.round(((presenceCount + justifiedCount) / totalSessions) * 100) : 0;
 
   const idade = calcularIdade(member.nascimento);
-  const waUrl = gerarWhatsAppUrl(member.contato, `Olá meu irmão ${member.name}, a paz do Senhor!`);
+  const statusFaixa = getStatusFaixaEtariaUPA(member.nascimento);
+  const waUrl = gerarWhatsAppUrl(member.contato, `Olá ${member.name}, a paz do Senhor!`);
+  const waRespUrl = gerarWhatsAppUrl(member.contatoResponsavel, `Olá, a paz do Senhor! Entramos em contato a respeito de ${member.name} (UPA).`);
 
   const handleCopyPin = () => {
     if (!member.pinCode) return;
@@ -132,12 +135,12 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-2xl bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[92vh]"
+          className="relative w-full max-w-2xl bg-white dark:bg-[#0b1220] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[92vh]"
         >
           {/* Header */}
-          <div className="p-6 sm:p-7 border-b border-[#E4DFD5] dark:border-[#2A3A31] flex items-center justify-between bg-[#FAF8F5] dark:bg-[#14231B]">
+          <div className="p-6 sm:p-7 border-b border-[#E4DFD5] dark:border-[#1e293b] flex items-center justify-between bg-[#FAF8F5] dark:bg-[#080e1a]">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#1B2E24]/20 dark:border-[#2A3A31] rounded-xl flex items-center justify-center font-bold text-base shadow-2xs tracking-wider shrink-0">
+              <div className="w-12 h-12 bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] border border-[#1B2E24]/20 dark:border-[#1e293b] rounded-xl flex items-center justify-center font-bold text-base shadow-2xs tracking-wider shrink-0">
                 {getInitials(member.name)}
               </div>
               <div>
@@ -145,11 +148,16 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   {stripEcclesiasticalTitle(member.name)}
                 </h3>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                  <span className="px-2.5 py-0.5 bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#1B2E24]/20 dark:border-[#2A3A31] rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                    {member.cargo || 'Membro UPH'}
+                  <span className="px-2.5 py-0.5 bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] border border-[#1B2E24]/20 dark:border-[#1e293b] rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                    {member.cargo || 'Sócio UPA'}
                   </span>
+                  {statusFaixa.idade !== null && (
+                    <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${statusFaixa.badgeClass}`}>
+                      {statusFaixa.rotulo}
+                    </span>
+                  )}
                   {member.funcaoEclesiastica && member.funcaoEclesiastica !== 'Não se aplica' && (
-                    <span className="px-2.5 py-0.5 bg-[#F6F4EF] dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-lg text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 bg-[#F6F4EF] dark:bg-[#030712] text-[#5C665F] dark:text-[#8A968F] border border-[#E4DFD5] dark:border-[#1e293b] rounded-lg text-[10px] font-bold">
                       {member.funcaoEclesiastica}
                     </span>
                   )}
@@ -165,7 +173,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
             </div>
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-[#E4DFD5]/50 dark:hover:bg-[#2A3A31] rounded-xl transition-colors text-[#5C665F] dark:text-[#8A968F] cursor-pointer"
+              className="p-2 hover:bg-[#E4DFD5]/50 dark:hover:bg-[#1e293b] rounded-xl transition-colors text-[#5C665F] dark:text-[#8A968F] cursor-pointer"
               title="Fechar"
             >
               <XCircle className="w-6 h-6" />
@@ -173,12 +181,12 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
           </div>
 
           {/* Tab Selector */}
-          <div className="flex border-b border-[#E4DFD5] dark:border-[#2A3A31] bg-white dark:bg-[#18221D] px-6 sm:px-8">
+          <div className="flex border-b border-[#E4DFD5] dark:border-[#1e293b] bg-white dark:bg-[#0b1220] px-6 sm:px-8">
             <button
               onClick={() => setActiveTab('ficha')}
               className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'ficha'
-                  ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#C8A96E] dark:text-[#C8A96E]'
+                  ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#38bdf8] dark:text-[#38bdf8]'
                   : 'border-transparent text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
@@ -189,13 +197,13 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
               onClick={() => setActiveTab('frequencia')}
               className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'frequencia'
-                  ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#C8A96E] dark:text-[#C8A96E]'
+                  ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#38bdf8] dark:text-[#38bdf8]'
                   : 'border-transparent text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8]'
               }`}
             >
               <TrendingUp className="w-3.5 h-3.5" />
               Frequência & Plenárias
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#F6F4EF] dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#E4DFD5] dark:border-[#2A3A31] font-mono">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#F6F4EF] dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] border border-[#E4DFD5] dark:border-[#1e293b] font-mono">
                 {presenceCount}
               </span>
             </button>
@@ -206,7 +214,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
             {activeTab === 'ficha' ? (
               <div className="space-y-6">
                 {/* Quick Actions Bar */}
-                <div className="flex flex-wrap items-center gap-2.5 p-3 bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl">
+                <div className="flex flex-wrap items-center gap-2.5 p-3 bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl">
                   {waUrl ? (
                     <a
                       href={waUrl}
@@ -215,14 +223,26 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                       className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      WhatsApp
+                      WhatsApp Adolescente
                     </a>
                   ) : null}
+
+                  {member.contatoResponsavel && waRespUrl && (
+                    <a
+                      href={waRespUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      WhatsApp {member.parentescoResponsavel || 'Responsável'}
+                    </a>
+                  )}
 
                   {member.contato ? (
                     <a
                       href={`tel:${member.contato.replace(/\D/g, '')}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#111614] hover:bg-[#F6F4EF] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-bold transition-all shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#030712] hover:bg-[#F6F4EF] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs font-bold transition-all shadow-2xs"
                     >
                       <Phone className="w-3.5 h-3.5 text-[#5C665F] dark:text-[#8A968F]" />
                       Ligar
@@ -232,7 +252,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   {member.email ? (
                     <a
                       href={`mailto:${member.email}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#111614] hover:bg-[#F6F4EF] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-bold transition-all shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#030712] hover:bg-[#F6F4EF] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs font-bold transition-all shadow-2xs"
                     >
                       <Mail className="w-3.5 h-3.5 text-[#5C665F] dark:text-[#8A968F]" />
                       E-mail
@@ -242,7 +262,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   {onEditMember && (
                     <button
                       onClick={() => onEditMember(member)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] text-white dark:text-[#111614] rounded-xl text-xs font-bold transition-all ml-auto shadow-2xs cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] text-white dark:text-[#030712] rounded-xl text-xs font-bold transition-all ml-auto shadow-2xs cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       Editar Ficha
@@ -252,20 +272,52 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
 
                 {/* Grid of details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Bloco 1: Contato & Localização */}
-                  <div className="bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#C8A96E] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-2">
+                  {/* Bloco 1: Contato & Responsável Legal */}
+                  <div className="bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#38bdf8] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#1e293b] pb-2">
                       <Phone className="w-3.5 h-3.5 text-[#C2A267]" />
-                      Contato & Endereço
+                      Contato & Responsável Legal
                     </div>
                     
                     <div className="space-y-2 text-xs">
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Telefone / WhatsApp</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Telefone / WhatsApp (Adolescente)</span>
                         <span className="font-semibold text-slate-800">
                           {member.contato ? formatPhone(member.contato) : <span className="text-slate-400 italic">Não informado</span>}
                         </span>
                       </div>
+
+                      {member.nomeResponsavel && (
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                            Responsável Legal ({member.parentescoResponsavel || 'Mãe/Pai'})
+                          </span>
+                          <span className="font-semibold text-slate-800">
+                            {member.nomeResponsavel}
+                          </span>
+                        </div>
+                      )}
+
+                      {member.contatoResponsavel && (
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">WhatsApp / Telefone do Responsável</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-800 font-mono">
+                              {formatPhone(member.contatoResponsavel)}
+                            </span>
+                            {waRespUrl && (
+                              <a
+                                href={waRespUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 text-[11px] font-bold inline-flex items-center gap-1"
+                              >
+                                <MessageCircle className="w-3 h-3" /> Falar
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">E-mail</span>
@@ -284,8 +336,8 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   </div>
 
                   {/* Bloco 2: Documentos & Pessoal */}
-                  <div className="bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#C8A96E] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-2">
+                  <div className="bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#38bdf8] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#1e293b] pb-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#C2A267]" />
                       Dados Pessoais & Documentos
                     </div>
@@ -325,28 +377,37 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                         <div>
                           <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Data de Nascimento</span>
                           <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">
-                            {member.nascimento ? `${formatDateBR(member.nascimento)}${idade !== null ? ` (${idade} anos)` : ''}` : '-'}
+                            {member.nascimento ? (
+                              <span className="flex items-center gap-1.5 flex-wrap">
+                                <span>{formatDateBR(member.nascimento)}</span>
+                                {statusFaixa.idade !== null && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${statusFaixa.badgeClass}`}>
+                                    {statusFaixa.rotulo}
+                                  </span>
+                                )}
+                              </span>
+                            ) : '-'}
                           </span>
                         </div>
                         <div>
                           <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Estado Civil</span>
-                          <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{member.estadoCivil || '-'}</span>
+                          <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{member.estadoCivil || 'Solteiro'}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Bloco 3: Vida Eclesiástica */}
-                  <div className="bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#C8A96E] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-2">
+                  {/* Bloco 3: Vida Eclesiástica & UPA */}
+                  <div className="bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#38bdf8] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#1e293b] pb-2">
                       <Landmark className="w-3.5 h-3.5 text-[#C2A267]" />
-                      Vida Eclesiástica & UPH
+                      Vida Eclesiástica & UPA
                     </div>
 
                     <div className="space-y-2 text-xs">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Função / Ofício</span>
+                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Função / Status</span>
                           <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{member.funcaoEclesiastica || 'Não se aplica'}</span>
                         </div>
                         <div>
@@ -368,17 +429,14 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Ingresso na UPH</span>
-                          <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{formatDateBR(member.uphEntryDate)}</span>
+                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Ingresso na UPA</span>
+                          <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{formatDateBR(member.upaEntryDate || member.uphEntryDate)}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Contribuinte / Dizimista</span>
+                          <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">Categoria / Contribuição</span>
                           <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">
-                            {member.dizimista ? (
-                              <span className="inline-flex items-center gap-1 text-[#C2A267] dark:text-[#C8A96E] font-bold">
-                                <HeartHandshake className="w-3.5 h-3.5" /> Ativo
-                              </span>
-                            ) : 'Geral'}
+                            {member.categoriaSocio || 'Sócio Ativo'}
+                            {member.dizimista ? ' · Dizimista' : ''}
                           </span>
                         </div>
                       </div>
@@ -386,8 +444,8 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   </div>
 
                   {/* Bloco 4: Filiação & Credenciais */}
-                  <div className="bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#C8A96E] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#2A3A31] pb-2">
+                  <div className="bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#38bdf8] font-bold text-xs uppercase tracking-wider border-b border-[#E4DFD5] dark:border-[#1e293b] pb-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#C2A267]" />
                       Filiação & PIN de Votação
                     </div>
@@ -403,10 +461,10 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                         <span className="font-semibold text-[#1B2E24] dark:text-[#EDEDE8]">{member.filiacaoPai || '-'}</span>
                       </div>
 
-                      <div className="pt-1 border-t border-[#E4DFD5] dark:border-[#2A3A31]">
+                      <div className="pt-1 border-t border-[#E4DFD5] dark:border-[#1e293b]">
                         <span className="text-[10px] font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-widest block">PIN de Acesso / Votação</span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="px-3 py-1 bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] font-mono font-bold rounded-lg tracking-widest text-sm">
+                          <span className="px-3 py-1 bg-[#1B2E24]/10 dark:bg-[#030712] border border-[#1B2E24]/20 dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] font-mono font-bold rounded-lg tracking-widest text-sm">
                             {member.pinCode || 'Não gerado'}
                           </span>
                           {member.pinCode && (
@@ -414,7 +472,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                               <button
                                 type="button"
                                 onClick={handleCopyPin}
-                                className="px-2.5 py-1 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-lg text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] text-xs font-semibold flex items-center gap-1 transition-all"
+                                className="px-2.5 py-1 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-lg text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] text-xs font-semibold flex items-center gap-1 transition-all"
                                 title="Copiar PIN"
                               >
                                 {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -464,26 +522,26 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
 
                 {/* Performance Chart */}
                 {sessions.length > 0 && (
-                  <div className="mb-6 p-4 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5] dark:bg-[#14231B]">
+                  <div className="mb-6 p-4 rounded-2xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5] dark:bg-[#080e1a]">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
+                        <TrendingUp className="w-4 h-4 text-[#C2A267] dark:text-[#38bdf8]" />
                         <h4 className="text-xs font-bold text-[#5C665F] dark:text-[#8A968F] uppercase tracking-wider">Evolução de Presença</h4>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 self-start">
                         <button 
                           onClick={() => setIncludeJustified(!includeJustified)}
                           className={`px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border cursor-pointer ${
-                            includeJustified ? 'bg-emerald-700 text-white border-transparent' : 'bg-white dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] border-[#E4DFD5] dark:border-[#2A3A31]'
+                            includeJustified ? 'bg-emerald-700 text-white border-transparent' : 'bg-white dark:bg-[#030712] text-[#5C665F] dark:text-[#8A968F] border-[#E4DFD5] dark:border-[#1e293b]'
                           }`}
                         >
                           Abonar Justif.
                         </button>
-                        <div className="flex gap-1 bg-[#F6F4EF] dark:bg-[#111614] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31]">
+                        <div className="flex gap-1 bg-[#F6F4EF] dark:bg-[#030712] p-1 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b]">
                           <button 
                             onClick={() => setMode('cumulative')}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                              mode === 'cumulative' ? 'bg-[#1B2E24] text-white dark:bg-[#C8A96E] dark:text-[#111614]' : 'text-[#5C665F] dark:text-[#8A968F]'
+                              mode === 'cumulative' ? 'bg-[#1B2E24] text-white dark:bg-[#38bdf8] dark:text-[#030712]' : 'text-[#5C665F] dark:text-[#8A968F]'
                             }`}
                           >
                             Acumulado
@@ -491,7 +549,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                           <button 
                             onClick={() => setMode('direct')}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                              mode === 'direct' ? 'bg-[#1B2E24] text-white dark:bg-[#C8A96E] dark:text-[#111614]' : 'text-[#5C665F] dark:text-[#8A968F]'
+                              mode === 'direct' ? 'bg-[#1B2E24] text-white dark:bg-[#38bdf8] dark:text-[#030712]' : 'text-[#5C665F] dark:text-[#8A968F]'
                             }`}
                           >
                             Ponto a Ponto
@@ -541,7 +599,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                         if (!record) return null;
 
                         return (
-                          <div key={session.id} className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5] dark:bg-[#14231B] hover:bg-white dark:hover:bg-[#18221D] transition-all">
+                          <div key={session.id} className="flex items-center justify-between p-3.5 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5] dark:bg-[#080e1a] hover:bg-white dark:hover:bg-[#0b1220] transition-all">
                             <div className="flex flex-col">
                               <span className="font-bold text-[#1B2E24] dark:text-[#EDEDE8] text-xs sm:text-sm">
                                 {format(session.date, "dd 'de' MMMM", { locale: ptBR })}
@@ -576,7 +634,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="p-4 sm:p-6 bg-[#14231B] border-t border-[#2A3A31] flex items-center justify-between text-[#FAF8F5]">
+          <div className="p-4 sm:p-6 bg-[#080e1a] border-t border-[#1e293b] flex items-center justify-between text-[#FAF8F5]">
             <div className="flex items-center gap-6">
               <div>
                 <p className="text-[10px] text-[#8A968F] font-bold uppercase tracking-wider leading-none mb-1">Presença Real</p>
@@ -584,10 +642,10 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
                   {frequencyReal}%
                 </p>
               </div>
-              <div className="w-px h-6 bg-[#2A3A31]" />
+              <div className="w-px h-6 bg-[#1e293b]" />
               <div>
                 <p className="text-[10px] text-[#8A968F] font-bold uppercase tracking-wider leading-none mb-1">Frequência (c/ Justif.)</p>
-                <p className="text-lg font-mono font-bold text-[#C8A96E] leading-none">
+                <p className="text-lg font-mono font-bold text-[#38bdf8] leading-none">
                   {frequencyJustified}%
                 </p>
               </div>

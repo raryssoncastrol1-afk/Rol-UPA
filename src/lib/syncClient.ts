@@ -42,9 +42,9 @@ export const syncClient = {
       const res = await fetch('/api/elections');
       if (res.ok) {
         const remote: Election[] = await res.json();
-        if (Array.isArray(remote) && remote.length > 0) {
-          // Atualiza localDB com a verdade do servidor
-          remote.forEach(el => localDB.saveElection(el));
+        if (Array.isArray(remote)) {
+          // O servidor é a autoridade máxima: substitui completamente o localDB
+          localDB.replaceAllElections(remote);
           return remote;
         }
       }

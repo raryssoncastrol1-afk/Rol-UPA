@@ -3,16 +3,14 @@
  * Gerencia persistência local transparente com suporte a migração e broadcast entre abas.
  */
 import { Member, AttendanceSession, Election, TreasuryTransaction, AppUser } from '../types';
-import { parseMarkdownMembers } from '../lib/markdownMemberParser';
-import { ROL_MEMBROS_UPH_2026_RAW } from '../data/uph2026Raw';
 
 const STORAGE_KEYS = {
-  MEMBERS: 'uph_db_members',
-  SESSIONS: 'uph_db_sessions',
-  ELECTIONS: 'uph_db_elections',
-  TREASURY: 'uph_db_treasury',
-  AUTH_USER: 'uph_auth_user',
-  SEEDED: 'uph_db_seeded_v1'
+  MEMBERS: 'upa_db_members',
+  SESSIONS: 'upa_db_sessions',
+  ELECTIONS: 'upa_db_elections',
+  TREASURY: 'upa_db_treasury',
+  AUTH_USER: 'upa_auth_user',
+  SEEDED: 'upa_db_seeded_v1'
 } as const;
 
 // Event target to notify React hooks across components without re-renders
@@ -27,14 +25,14 @@ export const dbEvents = new DBEventHub();
 // Escuta alterações em outras abas para sincronizar em tempo real
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key?.startsWith('uph_db_') || e.key === STORAGE_KEYS.AUTH_USER) {
+    if (e.key?.startsWith('upa_db_') || e.key === STORAGE_KEYS.AUTH_USER) {
       dbEvents.emit(e.key);
     }
   });
 }
 
 /**
- * Inicializa a base de dados com o Rol Oficial da UPH 2026 caso esteja vazia
+ * Inicializa a base de dados da UPA. Começa vazia aguardando cadastro dos adolescentes.
  */
 export function seedDefaultMembersIfNeeded(): Member[] {
   if (typeof window === 'undefined') return [];
@@ -42,7 +40,7 @@ export function seedDefaultMembersIfNeeded(): Member[] {
   if (existing) {
     try {
       const parsed = JSON.parse(existing);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     } catch (e) {
@@ -50,54 +48,10 @@ export function seedDefaultMembersIfNeeded(): Member[] {
     }
   }
 
-  // Popula com o ROL_MEMBROS_UPH_2026_RAW
-  try {
-    const rawParsed = parseMarkdownMembers(ROL_MEMBROS_UPH_2026_RAW);
-    const existingPins = new Set<string>();
-    const initialMembers: Member[] = rawParsed.map((p, idx) => {
-      let pin = p.pinCode || '';
-      if (!pin) {
-        let attempts = 0;
-        while ((!pin || existingPins.has(pin)) && attempts < 1000) {
-          pin = Math.floor(1000 + Math.random() * 9000).toString();
-          attempts++;
-        }
-      }
-      existingPins.add(pin);
-
-      return {
-        id: `mbr-${Date.now()}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
-        name: p.name,
-        cargo: p.cargo || 'Membro',
-        funcaoEclesiastica: p.funcaoEclesiastica,
-        situacao: p.situacao || 'Em Plena Comunhão',
-        contato: p.contato,
-        email: p.email,
-        endereco: p.endereco,
-        cpf: p.cpf,
-        rg: p.rg,
-        nascimento: p.nascimento,
-        estadoCivil: p.estadoCivil,
-        naturalidade: p.naturalidade,
-        tipoSanguineo: p.tipoSanguineo,
-        filiacaoMae: p.filiacaoMae,
-        filiacaoPai: p.filiacaoPai,
-        dataBatismo: p.dataBatismo,
-        dataProfissaoFe: p.dataProfissaoFe,
-        uphEntryDate: p.uphEntryDate,
-        dizimista: p.dizimista ?? false,
-        pinCode: pin,
-        createdAt: Date.now()
-      };
-    });
-
-    localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(initialMembers));
-    localStorage.setItem(STORAGE_KEYS.SEEDED, 'true');
-    return initialMembers;
-  } catch (err) {
-    console.error('Falha ao inicializar membros padrão:', err);
-    return [];
-  }
+  // Base UPA começa limpa/zerada
+  localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.SEEDED, 'true');
+  return [];
 }
 
 // Helpers genéricos de leitura e escrita

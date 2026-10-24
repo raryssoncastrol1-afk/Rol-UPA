@@ -38,13 +38,13 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-20 bg-white dark:bg-[#18221D] border-b border-[#E4DFD5] dark:border-[#2A3A31] px-4 sm:px-6 md:px-10 flex items-center justify-between shrink-0 z-10 sticky top-0 transition-colors duration-200 shadow-2xs">
+    <header className="h-20 bg-white dark:bg-[#0b1220] border-b border-[#E4DFD5] dark:border-[#1e293b] px-4 sm:px-6 md:px-10 flex items-center justify-between shrink-0 z-10 sticky top-0 transition-colors duration-200 shadow-2xs">
       <div className="min-w-0 pr-2">
         <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight truncate">
           {titles[activeView]}
         </h2>
         <div className="hidden md:flex items-center gap-2 mt-0.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#1B2E24] dark:bg-[#C8A96E]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#1B2E24] dark:bg-[#38bdf8]" />
           <p className="text-xs text-[#5C665F] dark:text-[#8A968F] font-medium capitalize">
             {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </p>
@@ -60,10 +60,10 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
           title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
-          className="min-w-[42px] min-h-[42px] p-2.5 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-white dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:border-[#1B2E24]/30 dark:hover:border-[#C8A96E]/40 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-2xs relative z-20"
+          className="min-w-[42px] min-h-[42px] p-2.5 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-white dark:bg-[#030712] text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24] dark:hover:text-[#EDEDE8] hover:border-[#1B2E24]/30 dark:hover:border-[#38bdf8]/40 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-2xs relative z-20"
         >
           {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-[#C8A96E]" />
+            <Sun className="w-4 h-4 text-[#38bdf8]" />
           ) : (
             <Moon className="w-4 h-4 text-[#C2A267]" />
           )}
@@ -73,9 +73,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             onClick={onSaveAttendance}
             disabled={!canSaveAttendance}
-            className="px-4 md:px-5 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-[#FAF8F5] dark:text-[#111614] font-bold rounded-xl shadow-xs active:scale-95 transition-all text-xs md:text-sm disabled:opacity-50 cursor-pointer flex items-center gap-2"
+            className="px-4 md:px-5 py-2.5 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] text-[#FAF8F5] dark:text-[#030712] font-bold rounded-xl shadow-xs active:scale-95 transition-all text-xs md:text-sm disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
-            <CheckCircle2 className="w-4 h-4 text-[#C2A267] dark:text-[#111614]" /> 
+            <CheckCircle2 className="w-4 h-4 text-[#C2A267] dark:text-[#030712]" /> 
             <span className="hidden sm:inline">Finalizar Chamada</span>
             <span className="sm:hidden">Salvar</span>
           </button>

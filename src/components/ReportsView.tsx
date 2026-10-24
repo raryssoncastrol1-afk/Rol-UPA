@@ -56,7 +56,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
       </div>
 
       {sessions.length === 0 ? (
-        <div className="bg-white border border-slate-200 border-dashed p-20 rounded-3xl text-center">
+        <div className="bg-white dark:bg-[#0b1220] border border-slate-200 dark:border-slate-800 border-dashed p-20 rounded-3xl text-center">
           <FileText className="w-12 h-12 text-slate-100 mx-auto mb-4" />
           <p className="text-slate-400 font-medium italic">Nenhum histórico registrado no momento.</p>
         </div>
@@ -67,7 +67,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
             const safeDate = session.date ? new Date(session.date) : new Date();
             const isValidDate = !isNaN(safeDate.getTime());
             return (
-              <div key={session.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group relative">
+              <div key={session.id} className="bg-white dark:bg-[#0b1220] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group relative">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <p className="text-2xl font-black text-slate-900 leading-none">
@@ -143,7 +143,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
       {/* Modal de Retificação de Presença (RF05) */}
       {editingSession && (
         <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+          <div className="bg-white dark:bg-[#0b1220] rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-xl font-bold text-slate-800">Retificar Chamada de Presença</h3>
@@ -226,7 +226,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sessions, updateSessio
 
       {sessionToDelete && (
         <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0b1220] rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-slate-800 mb-2">Remover Sessão</h3>
             <p className="text-slate-600 mb-6 font-normal">
               ATENÇÃO: A sessão será excluída do sistema e seus registros de presença irão sumir. Tem certeza que deseja continuar?

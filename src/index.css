@@ -1,15 +1,34 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Jersey M54';
+  src: url('/fonts/JerseyM54.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-uph-green: #1b2e24;
-  --color-uph-green-hover: #14231b;
-  --color-uph-gold: #c2a267;
+  --font-jersey: "Jersey M54", sans-serif;
+  
+  /* Cores Oficiais da UPA (Azul Marinho, Azul Royal e Dourado Institucional) */
+  --color-upa-navy: #0b192c;
+  --color-upa-blue: #0f2a4a;
+  --color-upa-blue-hover: #163863;
+  --color-upa-royal: #1d4ed8;
+  --color-upa-accent: #2563eb;
+  --color-upa-gold: #f59e0b;
+
+  /* Aliases institucionais para compatibilidade total de estilos */
+  --color-uph-green: #0f2a4a;
+  --color-uph-green-hover: #163863;
+  --color-uph-gold: #f59e0b;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -21,10 +40,10 @@
   }
 }
 
-/* Browser surface theming com verde institucional */
+/* Browser surface theming com azul institucional da UPA */
 ::selection {
-  background-color: #d1fae5;
-  color: #064e3b;
+  background-color: #dbeafe;
+  color: #1e3a8a;
 }
 
 /* Smooth custom scrollbars */

@@ -205,7 +205,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-[#0b1220] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Total Receitas</span>
             <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -218,7 +218,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           <p className="text-xs text-slate-400 mt-1">Dízimos, ofertas e doações</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-[#0b1220] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-rose-600">Total Despesas</span>
             <div className="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -231,7 +231,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           <p className="text-xs text-slate-400 mt-1">Custos, eventos e investimentos</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-[#0b1220] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Saldo em Caixa</span>
             <div className="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -247,7 +247,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
 
       {/* Tabela de Lançamentos */}
       <div className="space-y-4">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-[#0b1220] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-slate-400" />
@@ -336,7 +336,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
       {/* Modal de Criação Manual de Lançamento */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0b1220] rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-slate-800 mb-4">Novo Lançamento Financeiro</h3>
             <form onSubmit={handleSaveTransaction} className="space-y-4">
               <div>

@@ -70,7 +70,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
   const leaderCanWinNow = leader && (leader.votes + remainingVotes >= majorityRequired);
 
   return (
-    <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-slate-200 dark:border-[#2A3A31] shadow-xs space-y-3">
+    <div className="bg-white dark:bg-[#0b1220] p-5 rounded-2xl border border-slate-200 dark:border-[#1e293b] shadow-xs space-y-3">
       <div 
         onClick={() => setIsExpanded(prev => !prev)}
         className="flex items-center justify-between cursor-pointer select-none"
@@ -102,18 +102,18 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
       </div>
 
       {/* Visão Rápida (sempre visível) */}
-      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-[#2A3A31] text-center">
-        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-[#1e293b] text-center">
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#030712] border border-slate-100 dark:border-[#1e293b]">
           <span className="text-[10px] text-slate-400 block font-semibold">Exigido</span>
           <span className="text-sm font-mono font-bold text-slate-700 dark:text-[#EDEDE8]">{majorityRequired}</span>
           <span className="text-[9px] text-slate-400 block">votos (50%+1)</span>
         </div>
-        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#030712] border border-slate-100 dark:border-[#1e293b]">
           <span className="text-[10px] text-slate-400 block font-semibold">Urna</span>
           <span className="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">{currentVotes.length}</span>
           <span className="text-[9px] text-slate-400 block">computados</span>
         </div>
-        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-100 dark:border-[#2A3A31]">
+        <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#030712] border border-slate-100 dark:border-[#1e293b]">
           <span className="text-[10px] text-slate-400 block font-semibold">Pendentes</span>
           <span className="text-sm font-mono font-bold text-amber-600 dark:text-amber-400">{pendingMembers.length}</span>
           <span className="text-[9px] text-slate-400 block">a votar</span>
@@ -121,7 +121,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
       </div>
 
       {/* Projeção Atual */}
-      <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#111614] border border-slate-200/60 dark:border-[#2A3A31] text-xs">
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#030712] border border-slate-200/60 dark:border-[#1e293b] text-xs">
         {leaderHasMajority ? (
           <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -150,7 +150,7 @@ export const VotingSimulator: React.FC<VotingSimulatorProps> = ({
 
       {/* Detalhes Expandidos */}
       {isExpanded && (
-        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-[#2A3A31]">
+        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-[#1e293b]">
           <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Parcial do Escrutínio
           </h5>

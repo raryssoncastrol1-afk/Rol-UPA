@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[45vh] p-8 text-center bg-white dark:bg-[#18221D] rounded-2xl border border-rose-200 dark:border-rose-900/40 shadow-xs my-4">
+        <div className="flex flex-col items-center justify-center min-h-[45vh] p-8 text-center bg-white dark:bg-[#0b1220] rounded-2xl border border-rose-200 dark:border-rose-900/40 shadow-xs my-4">
           <div className="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6" />
           </div>
@@ -44,13 +44,13 @@ export class ErrorBoundary extends Component<Props, State> {
             Ocorreu uma inconsistência temporária ao carregar esta seção. Você pode tentar recarregar o módulo abaixo.
           </p>
           {this.state.error && (
-            <div className="bg-[#FAF8F5] dark:bg-[#111614] text-[#5C665F] dark:text-[#8A968F] text-xs font-mono p-3 rounded-xl mb-5 max-w-lg overflow-x-auto text-left border border-[#E4DFD5] dark:border-[#2A3A31]">
+            <div className="bg-[#FAF8F5] dark:bg-[#030712] text-[#5C665F] dark:text-[#8A968F] text-xs font-mono p-3 rounded-xl mb-5 max-w-lg overflow-x-auto text-left border border-[#E4DFD5] dark:border-[#1e293b]">
               {this.state.error.message || String(this.state.error)}
             </div>
           )}
           <button
             onClick={this.handleReset}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] text-white dark:text-[#030712] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" /> Recarregar Módulo
           </button>

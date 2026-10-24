@@ -184,12 +184,12 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white dark:bg-[#18221D] rounded-2xl shadow-2xl border border-[#E4DFD5] dark:border-[#2A3A31] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-[#0b1220] rounded-2xl shadow-2xl border border-[#E4DFD5] dark:border-[#1e293b] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header do Modal */}
-        <div className="px-6 py-5 border-b border-[#E4DFD5] dark:border-[#2A3A31] flex items-center justify-between bg-[#FAF8F5] dark:bg-[#14231B] shrink-0">
+        <div className="px-6 py-5 border-b border-[#E4DFD5] dark:border-[#1e293b] flex items-center justify-between bg-[#FAF8F5] dark:bg-[#080e1a] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] border border-[#1B2E24]/20 dark:border-[#2A3A31] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] border border-[#1B2E24]/20 dark:border-[#1e293b] flex items-center justify-center shrink-0">
               <Upload className="w-5 h-5" />
             </div>
             <div>
@@ -210,12 +210,12 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
         </div>
 
         {/* Corpo do Modal */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-white dark:bg-[#18221D]">
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-white dark:bg-[#0b1220]">
           
           {/* Ações Rápidas de Modelo */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] p-4 rounded-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] p-4 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 text-[#C2A267]" />
               </div>
               <p className="text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
@@ -226,7 +226,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
               <button
                 type="button"
                 onClick={handleLoadOfficialUPH}
-                className="px-3.5 py-2 bg-[#1B2E24] dark:bg-[#C8A96E] text-white dark:text-[#111614] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#14231B] shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 bg-[#1B2E24] dark:bg-[#38bdf8] text-white dark:text-[#030712] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#080e1a] shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Users className="w-3.5 h-3.5" />
                 Carregar Rol UPH 2026 (26 membros)
@@ -234,7 +234,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
-                className="px-3.5 py-2 bg-white dark:bg-[#111614] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#F6F4EF] transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 bg-white dark:bg-[#030712] text-[#1B2E24] dark:text-[#EDEDE8] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#F6F4EF] transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-[#C2A267]" />
                 Baixar Modelo .md
@@ -244,13 +244,13 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
 
           {/* Abas: Arquivo vs Colar */}
           <div className="space-y-4">
-            <div className="flex border-b border-[#E4DFD5] dark:border-[#2A3A31] gap-6">
+            <div className="flex border-b border-[#E4DFD5] dark:border-[#1e293b] gap-6">
               <button
                 type="button"
                 onClick={() => setActiveTab('upload')}
                 className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
                   activeTab === 'upload'
-                    ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#C8A96E] dark:text-[#C8A96E]'
+                    ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#38bdf8] dark:text-[#38bdf8]'
                     : 'border-transparent text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24]'
                 }`}
               >
@@ -261,7 +261,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                 onClick={() => setActiveTab('paste')}
                 className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
                   activeTab === 'paste'
-                    ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#C8A96E] dark:text-[#C8A96E]'
+                    ? 'border-[#1B2E24] text-[#1B2E24] dark:border-[#38bdf8] dark:text-[#38bdf8]'
                     : 'border-transparent text-[#5C665F] dark:text-[#8A968F] hover:text-[#1B2E24]'
                 }`}
               >
@@ -272,7 +272,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
             {activeTab === 'upload' ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#E4DFD5] dark:border-[#2A3A31] hover:border-[#1B2E24] dark:hover:border-[#C8A96E] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3"
+                className="border-2 border-dashed border-[#E4DFD5] dark:border-[#1e293b] hover:border-[#1B2E24] dark:hover:border-[#38bdf8] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3"
               >
                 <input
                   type="file"
@@ -281,12 +281,12 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                   accept=".md,.markdown,.txt"
                   className="hidden"
                 />
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#111614] shadow-2xs border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#030712] shadow-2xs border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center">
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
-                    Clique aqui ou arraste o arquivo <code className="text-[#C2A267] dark:text-[#C8A96E] font-mono">.md</code>
+                    Clique aqui ou arraste o arquivo <code className="text-[#C2A267] dark:text-[#38bdf8] font-mono">.md</code>
                   </p>
                   <p className="text-xs text-[#5C665F] dark:text-[#8A968F] mt-1">
                     Formatos suportados: .md, .markdown, .txt (com a tabela ou fichas UPH)
@@ -300,7 +300,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                   onChange={(e) => setMarkdownText(e.target.value)}
                   placeholder="Cole aqui o conteúdo do arquivo Markdown..."
                   rows={8}
-                  className="w-full p-4 bg-[#F6F4EF] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl text-xs font-mono text-[#1B2E24] dark:text-[#EDEDE8] focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#C8A96E] transition-all resize-y"
+                  className="w-full p-4 bg-[#F6F4EF] dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl text-xs font-mono text-[#1B2E24] dark:text-[#EDEDE8] focus:outline-hidden focus:border-[#1B2E24] dark:focus:border-[#38bdf8] transition-all resize-y"
                 />
               </div>
             )}
@@ -335,16 +335,16 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
           {/* Preview dos Membros Detectados */}
           {parsedList.length > 0 && (
             <div className="space-y-4 pt-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF8F5] dark:bg-[#14231B] p-4 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF8F5] dark:bg-[#080e1a] p-4 rounded-2xl border border-[#E4DFD5] dark:border-[#1e293b]">
                 <div className="flex items-center gap-3">
                   <div className="text-xs font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">
-                    Membros Identificados: <span className="font-mono font-bold text-[#C2A267] dark:text-[#C8A96E]">{parsedList.length}</span>
+                    Membros Identificados: <span className="font-mono font-bold text-[#C2A267] dark:text-[#38bdf8]">{parsedList.length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
                       {newCount} Novos
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-[#C2A267]/15 text-[#8c6f33] dark:text-[#C8A96E] border border-[#C2A267]/30 text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-[#C2A267]/15 text-[#8c6f33] dark:text-[#38bdf8] border border-[#C2A267]/30 text-[10px] font-bold">
                       {existingCount} Já Cadastrados
                     </span>
                   </div>
@@ -356,7 +356,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                       type="checkbox"
                       checked={updateExisting}
                       onChange={(e) => setUpdateExisting(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#1B2E24] dark:text-[#C8A96E] focus:ring-[#1B2E24]"
+                      className="w-4 h-4 rounded text-[#1B2E24] dark:text-[#38bdf8] focus:ring-[#1B2E24]"
                     />
                     Atualizar cadastros já existentes
                   </label>
@@ -364,7 +364,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                   <button
                     type="button"
                     onClick={toggleSelectAll}
-                    className="text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] hover:underline cursor-pointer"
+                    className="text-xs font-bold text-[#1B2E24] dark:text-[#38bdf8] hover:underline cursor-pointer"
                   >
                     {selectedIndices.size === parsedList.length ? 'Desmarcar Todos' : 'Marcar Todos'}
                   </button>
@@ -372,16 +372,16 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
               </div>
 
               {/* Tabela de Pré-conferência */}
-              <div className="border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
+              <div className="border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-[#FAF8F5] dark:bg-[#14231B] text-[#5C665F] dark:text-[#8A968F] font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-[#E4DFD5] dark:border-[#2A3A31]">
+                  <thead className="bg-[#FAF8F5] dark:bg-[#080e1a] text-[#5C665F] dark:text-[#8A968F] font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-[#E4DFD5] dark:border-[#1e293b]">
                     <tr>
                       <th className="py-2.5 px-3 w-10 text-center">
                         <input
                           type="checkbox"
                           checked={selectedIndices.size === parsedList.length && parsedList.length > 0}
                           onChange={toggleSelectAll}
-                          className="w-3.5 h-3.5 rounded text-[#1B2E24] dark:text-[#C8A96E]"
+                          className="w-3.5 h-3.5 rounded text-[#1B2E24] dark:text-[#38bdf8]"
                         />
                       </th>
                       <th className="py-2.5 px-3">Nº</th>
@@ -394,13 +394,13 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                       <th className="py-2.5 px-3 text-center">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E4DFD5] dark:divide-[#2A3A31]">
+                  <tbody className="divide-y divide-[#E4DFD5] dark:divide-[#1e293b]">
                     {comparisonList.map(({ member, index, isExisting }) => {
                       const isChecked = selectedIndices.has(index);
                       return (
                         <tr 
                           key={index}
-                          className={`hover:bg-[#FAF8F5] dark:hover:bg-[#14231B]/40 transition-colors ${
+                          className={`hover:bg-[#FAF8F5] dark:hover:bg-[#080e1a]/40 transition-colors ${
                             !isChecked ? 'opacity-50' : ''
                           }`}
                         >
@@ -409,7 +409,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => toggleSelectIndex(index)}
-                              className="w-3.5 h-3.5 rounded text-[#1B2E24] dark:text-[#C8A96E]"
+                              className="w-3.5 h-3.5 rounded text-[#1B2E24] dark:text-[#38bdf8]"
                             />
                           </td>
                           <td className="py-2.5 px-3 font-mono font-bold text-[#5C665F] dark:text-[#8A968F] text-[11px]">
@@ -435,7 +435,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {isExisting ? (
-                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-[#C2A267]/15 text-[#8c6f33] dark:text-[#C8A96E] border border-[#C2A267]/30">
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-[#C2A267]/15 text-[#8c6f33] dark:text-[#38bdf8] border border-[#C2A267]/30">
                                 Já Cadastrado
                               </span>
                             ) : (
@@ -456,7 +456,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
         </div>
 
         {/* Footer do Modal */}
-        <div className="px-6 py-4 border-t border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5] dark:bg-[#14231B] flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-t border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5] dark:bg-[#080e1a] flex items-center justify-between shrink-0">
           <div className="text-xs text-[#5C665F] dark:text-[#8A968F] font-medium">
             {parsedList.length > 0 ? (
               <span>
@@ -480,7 +480,7 @@ export const ImportMarkdownModal: React.FC<ImportMarkdownModalProps> = ({
               type="button"
               onClick={handleExecuteImport}
               disabled={isProcessing || selectedIndices.size === 0}
-              className="px-5 py-2.5 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] disabled:opacity-40 text-white dark:text-[#111614] rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
+              className="px-5 py-2.5 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] disabled:opacity-40 text-white dark:text-[#030712] rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
             >
               {isProcessing ? (
                 <>

@@ -20,7 +20,12 @@ export interface ParsedMemberData {
   filiacaoPai?: string;
   dataBatismo?: string; // AAAA-MM-DD
   dataProfissaoFe?: string; // AAAA-MM-DD
+  upaEntryDate?: string;
   uphEntryDate?: string;
+  categoriaSocio?: string;
+  nomeResponsavel?: string;
+  contatoResponsavel?: string;
+  parentescoResponsavel?: string;
   dizimista?: boolean;
   pinCode?: string;
   observacoes?: string;
@@ -522,48 +527,48 @@ export function exportMembersToMarkdown(
   }
 ): string {
   const church = options?.churchName || 'TERCEIRA IGREJA PRESBITERIANA DE BOA VISTA';
-  const society = options?.societyName || 'UNIÃO PRESBITERIANA DE HOMENS (UPH)';
+  const society = options?.societyName || 'UNIÃO PRESBITERIANA DE ADOLESCENTES (UPA)';
   const year = options?.year || new Date().getFullYear();
 
   let md = `# ${church}\n`;
   md += `## ${society}\n`;
   md += `### DADOS CADASTRAIS DOS MEMBROS DO ROL ATIVO (${year})\n\n`;
 
-  md += `> **Documento gerado a partir do Rol de Membros Digital do Sistema.**\n`;
-  md += `> Total de membros registrados: ${members.length}.\n\n`;
+  md += `> **Documento gerado a partir do Rol de Membros Digital da UPA.**\n`;
+  md += `> Total de adolescentes e sócios registrados: ${members.length}.\n\n`;
   md += `---\n\n`;
 
   // Seção 1: Tabela Resumo
-  md += `## 1. Tabela Resumo dos Membros da UPH\n\n`;
-  md += `| Nº | Nome Completo | Ofício / Título | Nascimento | Contato / Celular | E-mail | Tipo Sang. | Situação |\n`;
-  md += `| :---: | :--- | :---: | :---: | :--- | :--- | :---: | :---: |\n`;
+  md += `## 1. Tabela Resumo dos Membros da UPA\n\n`;
+  md += `| Nº | Nome Completo | Cargo / Categoria | Nascimento | Contato Adolescente | Responsável | WhatsApp Resp. | Situação |\n`;
+  md += `| :---: | :--- | :---: | :---: | :--- | :--- | :--- | :---: |\n`;
 
   members.forEach((m, idx) => {
     const num = String(idx + 1).padStart(2, '0');
-    const oficio = m.cargo || m.funcaoEclesiastica || 'Irmão';
+    const oficio = m.cargo || m.categoriaSocio || 'Sócio Ativo';
     const cleanName = stripEcclesiasticalTitle(m.name);
     const nasc = formatISOToDateBR(m.nascimento);
     const contato = m.contato || '—';
-    const email = m.email || '—';
-    const sang = m.tipoSanguineo || '—';
+    const resp = m.nomeResponsavel ? `${m.nomeResponsavel} (${m.parentescoResponsavel || 'Resp.'})` : '—';
+    const contatoResp = m.contatoResponsavel || '—';
     const sit = m.situacao === 'Em Plena Comunhão' ? 'Ativo' : (m.situacao || 'Ativo');
 
-    md += `| **${num}** | ${cleanName} | ${oficio} | ${nasc} | ${contato} | ${email} | ${sang} | ${sit} |\n`;
+    md += `| **${num}** | ${cleanName} | ${oficio} | ${nasc} | ${contato} | ${resp} | ${contatoResp} | ${sit} |\n`;
   });
 
   md += `\n---\n\n`;
 
   // Seção 2: Fichas Cadastrais Detalhadas
-  md += `## 2. Fichas Cadastrais Detalhadas\n\n`;
+  md += `## 2. Fichas Cadastrais Detalhadas da UPA\n\n`;
 
   members.forEach((m, idx) => {
     const num = String(idx + 1).padStart(2, '0');
     const cleanName = stripEcclesiasticalTitle(m.name);
-    const oficio = m.cargo || m.funcaoEclesiastica || 'Irmão';
+    const oficio = m.cargo || m.categoriaSocio || 'Sócio Ativo';
     const sit = m.situacao === 'Em Plena Comunhão' ? 'Ativo' : (m.situacao || 'Ativo');
     const nasc = formatISOToDateBR(m.nascimento);
     const naturalidade = m.naturalidade ? `Brasileiro | ${m.naturalidade}` : 'Brasileiro';
-    const estadoCivil = m.estadoCivil || 'Não informado';
+    const estadoCivil = m.estadoCivil || 'Solteiro';
     
     // Documentos
     const docParts: string[] = [];
@@ -571,7 +576,7 @@ export function exportMembersToMarkdown(
     if (m.cpf) docParts.push(`CPF ${m.cpf}`);
     const docs = docParts.length > 0 ? docParts.join(' | ') : 'Não informados no formulário';
 
-    // Filiação
+    // Filiação & Responsável
     let filiacao = 'Não informada no formulário';
     if (m.filiacaoMae || m.filiacaoPai) {
       const mae = m.filiacaoMae || 'Não consta';
@@ -583,22 +588,24 @@ export function exportMembersToMarkdown(
     const eclParts: string[] = [];
     if (m.dataBatismo) eclParts.push(`Batismo em ${formatISOToDateBR(m.dataBatismo)}`);
     if (m.dataProfissaoFe) eclParts.push(`Profissão de Fé em ${formatISOToDateBR(m.dataProfissaoFe)}`);
+    if (m.upaEntryDate || m.uphEntryDate) eclParts.push(`Ingresso UPA em ${formatISOToDateBR(m.upaEntryDate || m.uphEntryDate)}`);
     if (eclParts.length === 0) {
-      eclParts.push(`Membro Comungante (${m.funcaoEclesiastica || 'Ativo'})`);
+      eclParts.push(`Membro (${m.funcaoEclesiastica || 'Sócio Ativo'})`);
     }
     const dadosEcl = eclParts.join(' | ');
 
     md += `### ${num}. ${cleanName}\n`;
-    md += `- **Ofício / Situação na UPH:** ${oficio} | ${sit}\n`;
+    md += `- **Cargo / Categoria na UPA:** ${oficio} | ${sit}\n`;
     md += `- **Data de Nascimento:** ${nasc}\n`;
-    md += `- **Gênero:** Masculino\n`;
+    md += `- **Responsável Legal:** ${m.nomeResponsavel || 'Não informado'} (${m.parentescoResponsavel || 'Mãe/Pai'})\n`;
+    md += `- **WhatsApp do Responsável:** ${m.contatoResponsavel || 'Não informado'}\n`;
+    md += `- **Contato do Adolescente:** ${m.contato || 'Não informado'}\n`;
+    md += `- **E-mail:** ${m.email || 'Não informado'}\n`;
+    md += `- **Endereço:** ${m.endereco || 'Não informado'}\n`;
     md += `- **Nacionalidade / Naturalidade:** ${naturalidade}\n`;
     md += `- **Estado Civil:** ${estadoCivil}\n`;
     md += `- **Documentos:** ${docs}\n`;
     md += `- **Filiação:** ${filiacao}\n`;
-    md += `- **Endereço:** ${m.endereco || 'Não informado'}\n`;
-    md += `- **Contato:** ${m.contato || 'Não informado'}\n`;
-    md += `- **E-mail:** ${m.email || 'Não informado'}\n`;
     md += `- **Dados Eclesiásticos:** ${dadosEcl}\n`;
     md += `- **Tipo Sanguíneo:** ${m.tipoSanguineo || 'Não informado'}\n`;
     md += `\n---\n\n`;

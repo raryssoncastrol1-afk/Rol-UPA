@@ -8,7 +8,9 @@ import {
   BarChart3,
   Gavel,
   DollarSign,
-  Settings
+  Settings,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { useMembers, useSessions, useTreasury } from './hooks/useData';
 import { AttendanceStatus, AttendanceRecord, Member, SessionType, AppUser } from './types';
@@ -41,24 +43,24 @@ export default function App() {
   
   // App Roles
   const [appRole, setAppRole] = useState<'admin' | 'voter' | null>(() => {
-    return (localStorage.getItem('uph_app_role') as 'admin' | 'voter' | null) || (localDB.getCurrentUser()?.role ?? null);
+    return (localStorage.getItem('upa_app_role') as 'admin' | 'voter' | null) || (localDB.getCurrentUser()?.role ?? null);
   });
   const [voterMemberId, setVoterMemberId] = useState<string | null>(() => {
-    return localStorage.getItem('uph_voter_member_id');
+    return localStorage.getItem('upa_voter_member_id');
   });
 
   // Global Theme
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('uph_theme_mode');
+    const saved = localStorage.getItem('upa_theme_mode');
     if (saved === 'dark' || saved === 'light') return saved;
     return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
-    localStorage.setItem('uph_theme_mode', theme);
+    localStorage.setItem('upa_theme_mode', theme);
     const root = document.documentElement;
     root.classList.remove('neobrutalism');
-    try { localStorage.removeItem('uph_ui_style'); } catch {}
+    try { localStorage.removeItem('upa_ui_style'); } catch {}
     if (theme === 'dark') {
       root.classList.add('dark');
       root.style.colorScheme = 'dark';
@@ -69,12 +71,34 @@ export default function App() {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#111614' : '#F6F4EF');
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0B192C' : '#F6F4EF');
     }
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.warn('Erro ao alternar modo tela cheia:', err);
+    }
   }, []);
 
   const { members, addMember, removeMember, updateMember, importMembersBatch } = useMembers();
@@ -91,39 +115,39 @@ export default function App() {
 
   // Attendance logic states
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceStatus>>(() => {
-    const saved = localStorage.getItem('uph_attendanceRecords');
+    const saved = localStorage.getItem('upa_attendanceRecords');
     return saved ? JSON.parse(saved) : {};
   });
   const [justifications, setJustifications] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('uph_justifications');
+    const saved = localStorage.getItem('upa_justifications');
     return saved ? JSON.parse(saved) : {};
   });
   const [sessionType, setSessionType] = useState<SessionType>(() => {
-    return (localStorage.getItem('uph_sessionType') as SessionType) || 'programacao';
+    return (localStorage.getItem('upa_sessionType') as SessionType) || 'programacao';
   });
   const [plenaryCall, setPlenaryCall] = useState<1 | 2>(() => {
-    return (Number(localStorage.getItem('uph_plenaryCall')) as 1 | 2) || 1;
+    return (Number(localStorage.getItem('upa_plenaryCall')) as 1 | 2) || 1;
   });
   const [isAttendanceStarted, setIsAttendanceStarted] = useState(() => {
-    return localStorage.getItem('uph_isAttendanceStarted') === 'true';
+    return localStorage.getItem('upa_isAttendanceStarted') === 'true';
   });
 
   // Persist state changes
   useEffect(() => {
-    localStorage.setItem('uph_attendanceRecords', JSON.stringify(attendanceRecords));
-    localStorage.setItem('uph_justifications', JSON.stringify(justifications));
-    localStorage.setItem('uph_sessionType', sessionType);
-    localStorage.setItem('uph_plenaryCall', String(plenaryCall));
-    localStorage.setItem('uph_isAttendanceStarted', String(isAttendanceStarted));
-    if (appRole) localStorage.setItem('uph_app_role', appRole);
-    else localStorage.removeItem('uph_app_role');
+    localStorage.setItem('upa_attendanceRecords', JSON.stringify(attendanceRecords));
+    localStorage.setItem('upa_justifications', JSON.stringify(justifications));
+    localStorage.setItem('upa_sessionType', sessionType);
+    localStorage.setItem('upa_plenaryCall', String(plenaryCall));
+    localStorage.setItem('upa_isAttendanceStarted', String(isAttendanceStarted));
+    if (appRole) localStorage.setItem('upa_app_role', appRole);
+    else localStorage.removeItem('upa_app_role');
     
-    if (voterMemberId) localStorage.setItem('uph_voter_member_id', voterMemberId);
-    else localStorage.removeItem('uph_voter_member_id');
+    if (voterMemberId) localStorage.setItem('upa_voter_member_id', voterMemberId);
+    else localStorage.removeItem('upa_voter_member_id');
   }, [attendanceRecords, justifications, sessionType, plenaryCall, isAttendanceStarted, appRole, voterMemberId]);
 
   const handleAdminLogin = (password: string): boolean => {
-    const savedPassword = localStorage.getItem('uph_admin_password') || 'admin';
+    const savedPassword = localStorage.getItem('upa_admin_password') || 'admin';
     if (password === savedPassword) {
       const adminUser: AppUser = {
         id: 'admin-local',
@@ -133,7 +157,7 @@ export default function App() {
       localDB.setCurrentUser(adminUser);
       setUser(adminUser);
       setAppRole('admin');
-      localStorage.setItem('uph_app_role', 'admin');
+      localStorage.setItem('upa_app_role', 'admin');
       return true;
     }
     return false;
@@ -153,8 +177,8 @@ export default function App() {
       setUser(voterUser);
       setVoterMemberId(result.voter.id);
       setAppRole('voter');
-      localStorage.setItem('uph_voter_member_id', result.voter.id);
-      localStorage.setItem('uph_app_role', 'voter');
+      localStorage.setItem('upa_voter_member_id', result.voter.id);
+      localStorage.setItem('upa_app_role', 'voter');
       return { success: true };
     }
 
@@ -170,9 +194,9 @@ export default function App() {
     setUser(null);
     setAppRole(null);
     setVoterMemberId(null);
-    localStorage.removeItem('uph_auth_user');
-    localStorage.removeItem('uph_app_role');
-    localStorage.removeItem('uph_voter_member_id');
+    localStorage.removeItem('upa_auth_user');
+    localStorage.removeItem('upa_app_role');
+    localStorage.removeItem('upa_voter_member_id');
   };
 
   const stats = useMemo(() => {
@@ -248,17 +272,17 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#0d1f14] border-t-4 border-[#c59b27]">
+      <div className="h-screen w-full flex items-center justify-center bg-[#0B192C] border-t-4 border-[#2563EB]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center border border-[#174627] bg-[#102919]">
-              <ClipboardCheck className="w-8 h-8 text-[#c59b27]" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center border border-[#1E3A5F] bg-[#0F2A4A]">
+              <ClipboardCheck className="w-8 h-8 text-[#38BDF8]" />
             </div>
-            <div className="absolute inset-0 border-2 border-[#c59b27] rounded-2xl border-t-transparent animate-spin" />
+            <div className="absolute inset-0 border-2 border-[#38BDF8] rounded-2xl border-t-transparent animate-spin" />
           </div>
           <div className="text-center">
-            <h2 className="text-white font-display text-lg font-bold tracking-tight mb-1">UPH - Rol de Membros</h2>
-            <p className="text-[#a4c9ad] font-mono text-[10px] uppercase tracking-widest animate-pulse">Conectando ao sistema...</p>
+            <h2 className="text-white font-display text-lg font-bold tracking-tight mb-1">UPA - Rol de Membros</h2>
+            <p className="text-[#93C5FD] font-mono text-[10px] uppercase tracking-widest animate-pulse">Conectando ao sistema...</p>
           </div>
         </div>
       </div>
@@ -278,36 +302,77 @@ export default function App() {
   if (appRole === 'voter') {
     if (!voterMemberId) {
       return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#f8faf9] space-y-4">
-           <div className="w-10 h-10 border-3 border-[#0a3d1c] border-t-transparent rounded-full animate-spin" />
-           <p className="text-[#0a3d1c] font-semibold text-sm">Validando credenciais do eleitor...</p>
-           <button onClick={handleLogout} className="text-xs font-medium text-slate-500 hover:text-slate-800">Cancelar</button>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white space-y-4">
+           <div className="w-10 h-10 border-3 border-sky-400 border-t-transparent rounded-full animate-spin" />
+           <p className="text-sky-300 font-semibold text-sm">Validando credenciais do eleitor...</p>
+           <button onClick={handleLogout} className="text-xs font-medium text-neutral-400 hover:text-white">Cancelar</button>
         </div>
       );
     }
 
     return (
-      <div className="flex h-screen w-full bg-[#f1f5f3] font-sans text-slate-800 overflow-hidden">
-        <div className="flex-1 flex flex-col items-center max-w-lg mx-auto bg-white shadow-lg border-x border-slate-200/80">
-          <header className="w-full px-5 py-3.5 flex items-center justify-between border-b border-slate-200/80 bg-[#0a3d1c] text-white sticky top-0 z-10">
+      <div className="relative min-h-[100dvh] w-full flex flex-col bg-black text-white font-sans overflow-x-hidden selection:bg-white/20">
+        {/* Ambient Fluid Glows (UPA Theme - mesmo da tela de login) */}
+        <div className="fixed w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] -top-16 -left-16 bg-[radial-gradient(circle,rgba(29,66,104,0.3)_0%,rgba(22,50,79,0.15)_50%,transparent_75%)] rounded-full blur-[90px] pointer-events-none" />
+        <div className="fixed w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] -bottom-16 -right-16 bg-[radial-gradient(circle,rgba(184,74,20,0.2)_0%,rgba(166,64,19,0.1)_50%,transparent_75%)] rounded-full blur-[90px] pointer-events-none" />
+
+        <div className="relative z-10 flex-1 flex flex-col w-full max-w-xl mx-auto min-h-[100dvh]">
+          {/* Header Compacto Glassmorphism */}
+          <header className="w-full px-4 py-3 flex items-center justify-between border-b border-white/10 bg-black/40 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-[#134e27] border border-[#236b39] rounded-lg flex items-center justify-center text-[#c59b27]">
-                <Gavel className="w-3.5 h-3.5" />
+              <div className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/20 flex items-center justify-center p-1 backdrop-blur-sm">
+                <img 
+                  src="/upa-logo.png" 
+                  alt="UPA Logo" 
+                  className="w-full h-full object-contain filter drop-shadow-sm"
+                />
               </div>
-              <h1 className="font-bold text-sm tracking-tight text-white">UPH • Cabine de Votação</h1>
+              <div>
+                <h1 
+                  className="font-bold text-sm tracking-wide text-white leading-tight"
+                  style={{ fontFamily: "'Jersey M54', sans-serif" }}
+                >
+                  UPA 3ª IPBV
+                </h1>
+                <p className="text-[10px] text-sky-400 uppercase tracking-wider font-semibold">
+                  Cabine de Votação
+                </p>
+              </div>
             </div>
-            <button 
-              onClick={handleLogout}
-              className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#134e27] text-slate-200 hover:text-white hover:bg-[#1a5f31] border border-[#236b39] transition-colors cursor-pointer"
-            >
-              Sair
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Sair da Tela Cheia" : "Ficar em Tela Cheia"}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-xl bg-white/10 text-neutral-300 hover:text-white hover:bg-white/20 border border-white/15 transition-all cursor-pointer backdrop-blur-sm"
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="hidden sm:inline">Restaurar</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="hidden sm:inline">Tela Cheia</span>
+                  </>
+                )}
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30 transition-all cursor-pointer backdrop-blur-sm"
+              >
+                Sair
+              </button>
+            </div>
           </header>
-          <main className="flex-1 w-full overflow-y-auto bg-[#f8faf9]">
+
+          <main className="flex-1 w-full overflow-y-auto">
             <Suspense fallback={
-              <div className="p-8 text-center text-slate-400 text-sm">Carregando painel de votação...</div>
+              <div className="p-8 text-center text-neutral-400 text-sm">Carregando urna de votação...</div>
             }>
-              <VotingStation societyId="uph-society-id" voterMemberId={voterMemberId} />
+              <VotingStation societyId="upa-society-id" voterMemberId={voterMemberId} />
             </Suspense>
           </main>
         </div>
@@ -316,7 +381,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F6F4EF] dark:bg-[#111614] font-sans text-[#1B2E24] dark:text-[#EDEDE8] overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen w-full bg-[#F6F4EF] dark:bg-[#030712] font-sans text-[#1B2E24] dark:text-[#EDEDE8] overflow-hidden transition-colors duration-200">
       <Sidebar 
         activeView={activeView} 
         setActiveView={setActiveView} 
@@ -436,7 +501,7 @@ export default function App() {
         </div>
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="md:hidden flex items-center justify-around bg-white dark:bg-[#18221D] border-t border-[#E4DFD5] dark:border-[#2A3A31] px-1 py-1.5 shrink-0 z-20 shadow-lg">
+        <nav className="md:hidden flex items-center justify-around bg-white dark:bg-[#0b1220] border-t border-[#E4DFD5] dark:border-[#1e293b] px-1 py-1.5 shrink-0 z-20 shadow-lg">
           {navItems.filter(item => item.id !== 'statistics').map(item => {
             const isActive = activeView === item.id;
             return (
@@ -446,11 +511,11 @@ export default function App() {
                 aria-label={item.label}
                 className={`flex flex-col items-center justify-center flex-1 py-1 rounded-xl transition-all cursor-pointer ${
                   isActive 
-                    ? 'text-[#1B2E24] dark:text-[#C8A96E] font-bold' 
+                    ? 'text-[#1B2E24] dark:text-[#38bdf8] font-bold' 
                     : 'text-[#5C665F] dark:text-[#8A968F]'
                 }`}
               >
-                <item.icon className={`w-5 h-5 mb-0.5 ${isActive ? 'text-[#1B2E24] dark:text-[#C8A96E]' : ''}`} />
+                <item.icon className={`w-5 h-5 mb-0.5 ${isActive ? 'text-[#1B2E24] dark:text-[#38bdf8]' : ''}`} />
                 <span className="text-[10px] tracking-tight truncate max-w-[54px]">{item.label.split(' ')[0]}</span>
               </button>
             );

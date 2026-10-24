@@ -97,6 +97,11 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
       new Set(roleVotes.map((v) => v.candidateId))
     );
 
+    // Ballots executed
+    const executedBallots = [1, 2, 3].filter((b) =>
+      roleVotes.some((v) => v.ballotNumber === b)
+    );
+
     // Separate winner from runner-ups
     const nonElectedList = candidateIds
       .filter((id) => id !== winnerId)
@@ -125,11 +130,6 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
         const bLastVotes = b.ballotVotes.find((v) => v.ballotNum === lastBallot)?.votesCount || 0;
         return bLastVotes - aLastVotes;
       });
-
-    // Ballots executed
-    const executedBallots = [1, 2, 3].filter((b) =>
-      roleVotes.some((v) => v.ballotNumber === b)
-    );
 
     // Winner details
     const winnerDetails = winnerMember ? {
@@ -483,34 +483,34 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
         }
       `}} />
 
-      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-[#0b1220] rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Modal Top Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 no-print">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 no-print">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-uph-green">
               <FileText className="w-5 h-5 text-emerald-700" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-800">Relatório da Eleição</h3>
+              <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Relatório da Eleição</h3>
               <p className="text-slate-400 text-xs font-medium">Resultados, apurações e escrutínios consolidados</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
         {/* Modal Toolbar */}
-        <div className="bg-slate-50 border-b border-slate-100 px-6 py-3 flex flex-wrap gap-2 justify-between items-center no-print">
-          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Ações do Documento</span>
+        <div className="bg-slate-50 dark:bg-[#030712] border-b border-slate-100 dark:border-slate-800 px-6 py-3 flex flex-wrap gap-2 justify-between items-center no-print">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Ações do Documento</span>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyText}
-              className="px-4 py-2 bg-white text-slate-700 text-xs font-bold border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-sm shadow-slate-100"
+              className="px-4 py-2 bg-white dark:bg-[#0b1220] text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:bg-[#030712] transition-colors flex items-center gap-1.5 shadow-sm shadow-slate-100"
             >
               {copied ? (
                 <>
@@ -519,7 +519,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-500" />
+                  <Copy className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                   Copiar Relatório
                 </>
               )}
@@ -538,31 +538,31 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
         <div 
           id="print-report-area" 
           ref={reportRef} 
-          className="p-6 md:p-10 space-y-8 overflow-y-auto max-h-[70vh] flex-1 custom-scrollbar text-slate-800"
+          className="p-6 md:p-10 space-y-8 overflow-y-auto max-h-[70vh] flex-1 custom-scrollbar text-slate-800 dark:text-slate-100"
         >
           {/* Document Header */}
-          <div className="text-center pb-8 border-b border-dashed border-slate-200">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 font-sans uppercase">
+          <div className="text-center pb-8 border-b border-dashed border-slate-200 dark:border-slate-800">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white font-sans uppercase">
               Relatório de Eleição Oficial
             </h1>
-            <h2 className="text-lg font-bold text-slate-600 font-sans mt-1">
+            <h2 className="text-lg font-bold text-slate-600 dark:text-slate-300 font-sans mt-1">
               {election.name}
             </h2>
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 max-w-xl mx-auto text-left">
-              <div className="bg-slate-100/50 p-3 rounded-2xl border border-slate-200/50 text-center">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/50 text-center">
                 <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-extrabold mb-0.5">Sócios Presentes</span>
-                <span className="text-xl font-mono font-black text-slate-800">{presentCount}</span>
+                <span className="text-xl font-mono font-black text-slate-800 dark:text-slate-100">{presentCount}</span>
                 <span className="text-[10px] text-slate-400 block font-medium">eleitores habilitados</span>
               </div>
-              <div className="bg-slate-100/50 p-3 rounded-2xl border border-slate-200/50 text-center">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/50 text-center">
                 <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-extrabold mb-0.5">Maioria Absoluta</span>
                 <span className="text-xl font-mono font-black text-emerald-600">{majorityRequired}</span>
                 <span className="text-[10px] text-slate-400 block font-medium">votos para eleição</span>
               </div>
-              <div className="bg-slate-100/50 p-3 rounded-2xl border border-slate-200/50 text-center col-span-2 md:col-span-1">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/50 text-center col-span-2 md:col-span-1">
                 <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-extrabold mb-0.5">Data de Emissão</span>
-                <span className="text-sm font-bold text-slate-800 block mt-1.5">{new Date().toLocaleDateString('pt-BR')}</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100 block mt-1.5">{new Date().toLocaleDateString('pt-BR')}</span>
                 <span className="text-[10px] text-slate-400 block font-medium">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
@@ -573,14 +573,14 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
             {roleResults.map((res) => (
               <div key={res.role} className="space-y-4">
                 <div className="flex items-center gap-3 border-b-2 border-slate-950/80 pb-2">
-                  <Bookmark className="w-5 h-5 text-slate-500 shrink-0 print:hidden" />
-                  <h3 className="text-base font-black uppercase tracking-widest text-slate-900 font-sans">
+                  <Bookmark className="w-5 h-5 text-slate-500 dark:text-slate-400 shrink-0 print:hidden" />
+                  <h3 className="text-base font-black uppercase tracking-widest text-slate-900 dark:text-white font-sans">
                     Cargo: {res.label}
                   </h3>
                 </div>
 
                 {!res.hasVotes ? (
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center text-slate-400 text-xs font-semibold">
+                  <div className="p-4 bg-slate-50 dark:bg-[#030712] rounded-2xl border border-slate-100 dark:border-slate-800 text-center text-slate-400 text-xs font-semibold">
                     Nenhuma votação foi realizada ou iniciada para este cargo nesta sessão.
                   </div>
                 ) : (
@@ -617,7 +617,7 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
                               {res.winnerDetails.ballotVotes.map((bv) => {
                                 const percentage = presentCount > 0 ? ((bv.votesCount / presentCount) * 100).toFixed(1) : '0.0';
                                 return (
-                                  <div key={bv.ballotNum} className="flex justify-between text-xs text-slate-700">
+                                  <div key={bv.ballotNum} className="flex justify-between text-xs text-slate-700 dark:text-slate-200">
                                     <span className="font-semibold">{bv.ballotNum}º Escrutínio:</span>
                                     <span className="font-mono font-bold">
                                       {bv.votesCount} votos <span className="text-slate-400 font-normal">({percentage}%)</span>
@@ -637,27 +637,27 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
 
                     {/* Non-Elected Section */}
                     <div className="md:col-span-6 space-y-2">
-                      <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block">
+                      <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full inline-block">
                         Votação Demais Candidatos (Não Eleitos)
                       </span>
                       {res.nonElectedList.length === 0 ? (
-                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-400 text-xs font-semibold text-center mt-1">
+                        <div className="p-4 bg-slate-50 dark:bg-[#030712] rounded-2xl border border-slate-100 dark:border-slate-800 text-slate-400 text-xs font-semibold text-center mt-1">
                           Nenhum outro candidato recebeu votos.
                         </div>
                       ) : (
-                        <div className="space-y-2 border border-slate-100 rounded-2xl p-4 bg-white/50 print:border-slate-300">
+                        <div className="space-y-2 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-[#0b1220]/50 print:border-slate-300">
                           {res.nonElectedList.map((cand) => (
                             <div 
                               key={cand.id} 
-                              className="pb-2.5 last:pb-0 border-b last:border-0 border-slate-100 text-xs space-y-1"
+                              className="pb-2.5 last:pb-0 border-b last:border-0 border-slate-100 dark:border-slate-800 text-xs space-y-1"
                             >
-                              <div className="flex justify-between items-center font-bold text-slate-800">
+                              <div className="flex justify-between items-center font-bold text-slate-800 dark:text-slate-100">
                                 <span className="truncate pr-2">{cand.name}</span>
                               </div>
-                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 font-medium">
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                 {cand.ballotVotes.map((bv) => (
                                   <span key={bv.ballotNum}>
-                                    {bv.ballotNum}º Escrutínio: <strong className="font-mono font-black text-slate-700">{bv.votesCount} votos</strong>
+                                    {bv.ballotNum}º Escrutínio: <strong className="font-mono font-black text-slate-700 dark:text-slate-200">{bv.votesCount} votos</strong>
                                   </span>
                                 ))}
                               </div>
@@ -675,21 +675,21 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
 
           {/* Seção de Resoluções e Ocorrências da Mesa */}
           {election.overrideNotes && election.overrideNotes.length > 0 && (
-            <div className="mt-10 pt-8 border-t-2 border-slate-200 space-y-4">
+            <div className="mt-10 pt-8 border-t-2 border-slate-200 dark:border-slate-800 space-y-4">
               <div className="flex items-center gap-2">
                 <Bookmark className="w-4 h-4 text-amber-600 shrink-0" />
-                <h4 className="font-black text-sm uppercase tracking-wider text-slate-900 font-sans">
+                <h4 className="font-black text-sm uppercase tracking-wider text-slate-900 dark:text-white font-sans">
                   Resoluções e Ocorrências Extraordinárias da Mesa
                 </h4>
               </div>
               <div className="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-4 space-y-2">
                 {election.overrideNotes.map((note) => (
-                  <div key={note.id} className="text-xs text-slate-700 flex items-start gap-2 border-b border-amber-100 last:border-0 pb-2 last:pb-0">
+                  <div key={note.id} className="text-xs text-slate-700 dark:text-slate-200 flex items-start gap-2 border-b border-amber-100 last:border-0 pb-2 last:pb-0">
                     <span className="text-[10px] text-amber-700 font-mono font-bold shrink-0 mt-0.5">
                       [{new Date(note.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}]
                     </span>
                     <span>
-                      <strong className="text-slate-900">{ROLE_LABELS[note.role]}:</strong> {note.description}
+                      <strong className="text-slate-900 dark:text-white">{ROLE_LABELS[note.role]}:</strong> {note.description}
                     </span>
                   </div>
                 ))}
@@ -698,17 +698,17 @@ export const ElectionReportModal: React.FC<ElectionReportModalProps> = ({
           )}
 
           {/* Footer Signature Field */}
-          <div className="pt-16 mt-16 border-t border-dashed border-slate-200">
+          <div className="pt-16 mt-16 border-t border-dashed border-slate-200 dark:border-slate-800">
             <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
               <div className="text-center space-y-1">
                 <div className="h-0.5 bg-slate-300 w-full mb-1" />
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Presidente da Mesa</span>
-                <span className="text-xs font-medium text-slate-600 block">Assinatura</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 block">Assinatura</span>
               </div>
               <div className="text-center space-y-1">
                 <div className="h-0.5 bg-slate-300 w-full mb-1" />
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Secretário da Mesa</span>
-                <span className="text-xs font-medium text-slate-600 block">Assinatura</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 block">Assinatura</span>
               </div>
             </div>
             <div className="text-center text-[10px] text-slate-300 mt-12 font-medium">

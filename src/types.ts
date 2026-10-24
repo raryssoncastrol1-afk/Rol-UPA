@@ -1,6 +1,7 @@
-export type FuncaoEclesiastica = 'Pastor' | 'Presbítero' | 'Diácono' | 'Membro Comungante' | 'Cooperador' | 'Não se aplica';
-export type SituacaoMembro = 'Em Plena Comunhão' | 'Sob Disciplina' | 'Não Comungante' | 'Transferido';
-export type EstadoCivil = 'Casado' | 'Solteiro' | 'Viúvo' | 'Divorciado';
+export type FuncaoEclesiastica = 'Membro Comungante' | 'Membro Não Comungante' | 'Conselheiro' | 'Pastor' | 'Presbítero' | 'Diácono' | 'Cooperador' | 'Não se aplica';
+export type SituacaoMembro = 'Em Plena Comunhão' | 'Não Comungante' | 'Sob Disciplina' | 'Transferido';
+export type EstadoCivil = 'Solteiro' | 'Casado' | 'Outro';
+export type CategoriaSocioUPA = 'Ativo' | 'Cooperador' | 'Conselheiro' | 'Honorário';
 
 export interface AppUser {
   id: string;
@@ -12,29 +13,36 @@ export interface AppUser {
 export interface Member {
   id: string;
   name: string;
-  cargo?: string; // Cargo na UPH (Presidente, Secretário, Sócio, etc.)
+  cargo?: string; // Cargo na UPA (Presidente, Vice-Presidente, Secretário, Tesoureiro, Conselheiro, etc.)
+  categoriaSocio?: CategoriaSocioUPA | string; // Ativo (12-17 anos), Cooperador, Conselheiro
   funcaoEclesiastica?: FuncaoEclesiastica | string;
   situacao?: SituacaoMembro | string;
   
-  // Contato & Endereço
-  contato?: string; // Celular / WhatsApp
+  // Contato do Adolescente & Endereço
+  contato?: string; // Celular / WhatsApp do adolescente
   email?: string;
   endereco?: string;
+
+  // Responsável Legal / Pais (Fundamental para adolescentes)
+  nomeResponsavel?: string; // Nome da Mãe, Pai ou Responsável Legal
+  contatoResponsavel?: string; // Telefone / WhatsApp do Responsável para avisos e emergências
+  parentescoResponsavel?: 'Mãe' | 'Pai' | 'Responsável Legal' | 'Outro' | string;
 
   // Pessoal & Documentos
   cpf?: string;
   rg?: string;
-  nascimento?: string; // AAAA-MM-DD
+  nascimento?: string; // AAAA-MM-DD (para cálculo automático de idade e transição UMP)
   estadoCivil?: EstadoCivil | string;
   naturalidade?: string;
   tipoSanguineo?: string;
   filiacaoMae?: string;
   filiacaoPai?: string;
 
-  // Vida Eclesiástica
+  // Vida Eclesiástica & UPA
   dataBatismo?: string;
   dataProfissaoFe?: string;
-  uphEntryDate?: string;
+  upaEntryDate?: string;
+  uphEntryDate?: string; // Mantido para compatibilidade retroativa
   dizimista?: boolean;
 
   // Sistema & Segurança
@@ -109,6 +117,10 @@ export interface Election {
   manualWinners?: Partial<Record<Role, ManualWinner>>;
   overrideNotes?: OverrideNote[];
   allowNonPresentCandidates?: boolean;
+  isBallotOpen?: boolean; // Se false, a mesa está na tela intermediária ajustando aptos
+  isBallotClosedByMesa?: boolean; // Flag persistida no banco: só revela os votos/resultado aos eleitores quando a mesa clica em Encerrar o Escrutínio
+  isBallotFinalizedByMesa?: boolean; // Só revela o vencedor para os eleitores quando a mesa oficializa/finaliza o escrutínio
+  officialWinners?: Partial<Record<Role, { memberId: string; ballotNumber?: number; detail?: string }>>; // Registra os vencedores OFICIALMENTE proclamados pela mesa
 }
 
 export interface TreasuryTransaction {

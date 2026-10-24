@@ -63,7 +63,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   } | null>(null);
 
   // Senha salva atual
-  const savedPassword = localStorage.getItem('uph_admin_password') || 'admin';
+  const savedPassword = localStorage.getItem('upa_admin_password') || 'admin';
   const isDefaultPassword = savedPassword === 'admin';
 
   // Força da senha
@@ -106,7 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
 
-    localStorage.setItem('uph_admin_password', newPassword);
+    localStorage.setItem('upa_admin_password', newPassword);
     setCurrentPasswordInput('');
     setNewPassword('');
     setConfirmPassword('');
@@ -202,7 +202,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="space-y-8 pb-12">
       {/* 1. Indicadores de Estado do Sistema */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 text-left">
-        <div className="bg-[#1B2E24] dark:bg-[#14231B] p-5 rounded-2xl shadow-2xs text-[#FAF8F5] border border-[#2A3A31] transition-all">
+        <div className="bg-[#1B2E24] dark:bg-[#080e1a] p-5 rounded-2xl shadow-2xs text-[#FAF8F5] border border-[#1e293b] transition-all">
           <p className="text-xs font-semibold text-[#8A968F] mb-2">Segurança de Acesso</p>
           <div className="flex items-center gap-2">
             {isDefaultPassword ? (
@@ -220,7 +220,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+        <div className="bg-white dark:bg-[#0b1220] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#1e293b] shadow-2xs transition-colors">
           <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Último Backup Gerado</p>
           <div className="flex items-baseline gap-1.5">
             <p className="text-base md:text-lg font-mono font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">
@@ -232,7 +232,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+        <div className="bg-white dark:bg-[#0b1220] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#1e293b] shadow-2xs transition-colors">
           <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Volume de Registros</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl md:text-4xl font-mono font-bold text-[#1B2E24] dark:text-[#EDEDE8] tracking-tight">
@@ -245,10 +245,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#18221D] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#2A3A31] shadow-2xs transition-colors">
+        <div className="bg-white dark:bg-[#0b1220] p-5 rounded-2xl border border-[#E4DFD5] dark:border-[#1e293b] shadow-2xs transition-colors">
           <p className="text-xs font-semibold text-[#5C665F] dark:text-[#8A968F] mb-2">Armazenamento Ativo</p>
           <div className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-[#C2A267] dark:text-[#C8A96E]" />
+            <Database className="w-5 h-5 text-[#C2A267] dark:text-[#38bdf8]" />
             <p className="text-base md:text-lg font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
               SQLite + PWA
             </p>
@@ -264,9 +264,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         
         {/* Coluna Esquerda: Segurança & Troca de Senha */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-6 md:p-7 shadow-2xs">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#E4DFD5] dark:border-[#2A3A31]">
-              <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-6 md:p-7 shadow-2xs">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#E4DFD5] dark:border-[#1e293b]">
+              <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#030712] border border-[#1B2E24]/20 dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
                 <KeyRound className="w-5 h-5" />
               </div>
               <div>
@@ -315,7 +315,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     value={currentPasswordInput}
                     onChange={(e) => setCurrentPasswordInput(e.target.value)}
                     placeholder="Digite a senha atual"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:outline-hidden pr-10"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#38bdf8] focus:outline-hidden pr-10"
                   />
                   <button
                     type="button"
@@ -338,7 +338,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Mínimo 4 caracteres"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:outline-hidden pr-10"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#38bdf8] focus:outline-hidden pr-10"
                   />
                   <button
                     type="button"
@@ -362,7 +362,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                                 : lvl <= 3
                                 ? 'bg-blue-500'
                                 : 'bg-emerald-500'
-                              : 'bg-slate-200 dark:bg-[#2A3A31]'
+                              : 'bg-slate-200 dark:bg-[#1e293b]'
                           }`}
                         />
                       ))}
@@ -387,13 +387,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a nova senha"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#C8A96E] focus:outline-hidden"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs md:text-sm font-medium text-[#1B2E24] dark:text-[#EDEDE8] focus:border-[#1B2E24] dark:focus:border-[#38bdf8] focus:outline-hidden"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] font-bold rounded-xl transition-all shadow-2xs text-xs md:text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 mt-2"
+                className="w-full py-2.5 px-4 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] text-white dark:text-[#030712] font-bold rounded-xl transition-all shadow-2xs text-xs md:text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 mt-2"
               >
                 <Lock className="w-4 h-4" />
                 <span>Atualizar Senha</span>
@@ -402,15 +402,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Card de Identificação Institucional */}
-          <div className="bg-[#FAF8F5] dark:bg-[#14231B] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-5 text-xs text-[#5C665F] dark:text-[#8A968F] space-y-2">
+          <div className="bg-[#FAF8F5] dark:bg-[#080e1a] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-5 text-xs text-[#5C665F] dark:text-[#8A968F] space-y-2">
             <div className="flex items-center gap-2 text-[#1B2E24] dark:text-[#EDEDE8] font-bold">
-              <Info className="w-4 h-4 text-[#C2A267] dark:text-[#C8A96E]" />
-              <span>Instância Operacional UPH</span>
+              <Info className="w-4 h-4 text-[#C2A267] dark:text-[#38bdf8]" />
+              <span>Instância Operacional UPA</span>
             </div>
             <p>
-              Sistema de Rol, Frequência, Eleições e Tesouraria configurado para a <strong>União Presbiteriana de Homens (UPH) da 3ª Igreja Presbiteriana de Boa Vista (IPBV)</strong>.
+              Sistema de Rol, Frequência, Eleições e Tesouraria configurado para a <strong>União Presbiteriana de Adolescentes (UPA) da 3ª Igreja Presbiteriana de Boa Vista (IPBV)</strong>.
             </p>
-            <div className="pt-2 border-t border-[#E4DFD5] dark:border-[#2A3A31] flex justify-between font-mono text-[11px]">
+            <div className="pt-2 border-t border-[#E4DFD5] dark:border-[#1e293b] flex justify-between font-mono text-[11px]">
               <span>Versão 2026.1 (Full-Stack)</span>
               <span className="text-emerald-700 dark:text-emerald-400 font-bold">● Operando Localmente</span>
             </div>
@@ -421,10 +421,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="lg:col-span-7 space-y-6">
           
           {/* Backups Modulares em JSON */}
-          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-6 md:p-7 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#E4DFD5] dark:border-[#2A3A31]">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-6 md:p-7 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#E4DFD5] dark:border-[#1e293b]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#030712] border border-[#1B2E24]/20 dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
                   <Download className="w-5 h-5" />
                 </div>
                 <div>
@@ -440,7 +440,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => exportFullBackup({ members, sessions, treasury: transactions, elections })}
-                className="px-4 py-2 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] text-white dark:text-[#111614] rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                className="px-4 py-2 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] text-white dark:text-[#030712] rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
                 title="Gera um único arquivo com todas as tabelas e dados do sistema"
               >
                 <HardDrive className="w-4 h-4" />
@@ -452,10 +452,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               
               {/* 1. Membros */}
-              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#C8A96E]/50">
+              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#38bdf8]/50">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center font-bold">
                       <Users className="w-4 h-4" />
                     </div>
                     <div>
@@ -463,25 +463,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <p className="text-[11px] text-[#5C665F] dark:text-[#8A968F]">Fichas, cargos e PINs</p>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] bg-white dark:bg-[#111614] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#2A3A31]">
+                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#38bdf8] bg-white dark:bg-[#030712] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#1e293b]">
                     {members.length}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => exportMembersBackup(members)}
-                  className="w-full py-2 px-3 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#18221D] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  className="w-full py-2 px-3 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#0b1220] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
-                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#C8A96E]" />
+                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#38bdf8]" />
                   <span>Baixar membros.json</span>
                 </button>
               </div>
 
               {/* 2. Frequência */}
-              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#C8A96E]/50">
+              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#38bdf8]/50">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center font-bold">
                       <ClipboardCheck className="w-4 h-4" />
                     </div>
                     <div>
@@ -489,25 +489,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <p className="text-[11px] text-[#5C665F] dark:text-[#8A968F]">Presenças e justificativas</p>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] bg-white dark:bg-[#111614] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#2A3A31]">
+                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#38bdf8] bg-white dark:bg-[#030712] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#1e293b]">
                     {sessions.length}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => exportSessionsBackup(sessions)}
-                  className="w-full py-2 px-3 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#18221D] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  className="w-full py-2 px-3 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#0b1220] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
-                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#C8A96E]" />
+                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#38bdf8]" />
                   <span>Baixar frequencia.json</span>
                 </button>
               </div>
 
               {/* 3. Tesouraria */}
-              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#C8A96E]/50">
+              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#38bdf8]/50">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center font-bold">
                       <DollarSign className="w-4 h-4" />
                     </div>
                     <div>
@@ -515,25 +515,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <p className="text-[11px] text-[#5C665F] dark:text-[#8A968F]">Receitas e despesas</p>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] bg-white dark:bg-[#111614] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#2A3A31]">
+                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#38bdf8] bg-white dark:bg-[#030712] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#1e293b]">
                     {transactions.length}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => exportTreasuryBackup(transactions)}
-                  className="w-full py-2 px-3 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#18221D] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  className="w-full py-2 px-3 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#0b1220] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
-                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#C8A96E]" />
+                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#38bdf8]" />
                   <span>Baixar tesouraria.json</span>
                 </button>
               </div>
 
               {/* 4. Eleições */}
-              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#2A3A31] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#C8A96E]/50">
+              <div className="p-4 rounded-xl border border-[#E4DFD5] dark:border-[#1e293b] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 flex flex-col justify-between transition-colors hover:border-[#1B2E24] dark:hover:border-[#38bdf8]/50">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#111614] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-[#1B2E24]/10 dark:bg-[#030712] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center font-bold">
                       <Gavel className="w-4 h-4" />
                     </div>
                     <div>
@@ -541,16 +541,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <p className="text-[11px] text-[#5C665F] dark:text-[#8A968F]">Escrutínios e votos</p>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#C8A96E] bg-white dark:bg-[#111614] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#2A3A31]">
+                  <span className="font-mono text-xs font-bold text-[#1B2E24] dark:text-[#38bdf8] bg-white dark:bg-[#030712] px-2 py-0.5 rounded-md border border-[#E4DFD5] dark:border-[#1e293b]">
                     {elections.length}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => exportElectionsBackup(elections)}
-                  className="w-full py-2 px-3 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#18221D] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  className="w-full py-2 px-3 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#EDEDE8] hover:bg-[#FAF8F5] dark:hover:bg-[#0b1220] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
-                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#C8A96E]" />
+                  <FileJson className="w-3.5 h-3.5 text-[#C2A267] dark:text-[#38bdf8]" />
                   <span>Baixar eleicoes.json</span>
                 </button>
               </div>
@@ -559,9 +559,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Central de Restauração de Dados */}
-          <div className="bg-white dark:bg-[#18221D] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-2xl p-6 md:p-7 shadow-2xs">
-            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-[#E4DFD5] dark:border-[#2A3A31]">
-              <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#111614] border border-[#1B2E24]/20 dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center shrink-0">
+          <div className="bg-white dark:bg-[#0b1220] border border-[#E4DFD5] dark:border-[#1e293b] rounded-2xl p-6 md:p-7 shadow-2xs">
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-[#E4DFD5] dark:border-[#1e293b]">
+              <div className="w-10 h-10 rounded-xl bg-[#1B2E24]/10 dark:bg-[#030712] border border-[#1B2E24]/20 dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
                 <Upload className="w-5 h-5" />
               </div>
               <div>
@@ -600,14 +600,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {!parsedBackup ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#E4DFD5] dark:border-[#2A3A31] hover:border-[#1B2E24] dark:hover:border-[#C8A96E] bg-[#FAF8F5]/60 dark:bg-[#14231B]/40 rounded-2xl p-7 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5"
+                className="border-2 border-dashed border-[#E4DFD5] dark:border-[#1e293b] hover:border-[#1B2E24] dark:hover:border-[#38bdf8] bg-[#FAF8F5]/60 dark:bg-[#080e1a]/40 rounded-2xl p-7 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5"
               >
-                <div className="w-11 h-11 rounded-xl bg-white dark:bg-[#111614] shadow-2xs border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#C8A96E] flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-white dark:bg-[#030712] shadow-2xs border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#38bdf8] flex items-center justify-center">
                   <Upload className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#1B2E24] dark:text-[#EDEDE8]">
-                    Clique para selecionar um arquivo de backup <code className="text-[#C2A267] dark:text-[#C8A96E] font-mono">.json</code>
+                    Clique para selecionar um arquivo de backup <code className="text-[#C2A267] dark:text-[#38bdf8] font-mono">.json</code>
                   </p>
                   <p className="text-xs text-[#5C665F] dark:text-[#8A968F] mt-1">
                     Suporta membros, chamadas, tesouraria, eleições ou backup completo unificado
@@ -615,10 +615,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-5 rounded-2xl border border-[#C2A267]/40 bg-[#FAF8F5] dark:bg-[#14231B] space-y-4">
+              <div className="p-5 rounded-2xl border border-[#C2A267]/40 bg-[#FAF8F5] dark:bg-[#080e1a] space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-[#1B2E24] text-white dark:bg-[#C8A96E] dark:text-[#111614] flex items-center justify-center font-bold">
+                    <div className="w-9 h-9 rounded-xl bg-[#1B2E24] text-white dark:bg-[#38bdf8] dark:text-[#030712] flex items-center justify-center font-bold">
                       <FileJson className="w-5 h-5" />
                     </div>
                     <div>
@@ -640,7 +640,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </button>
                 </div>
 
-                <div className="p-3 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] rounded-xl text-xs text-[#5C665F] dark:text-[#8A968F] flex items-start gap-2">
+                <div className="p-3 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] rounded-xl text-xs text-[#5C665F] dark:text-[#8A968F] flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <span>
                     Atenção: A restauração substituirá ou mesclará os registros do módulo selecionado no banco local.
@@ -652,7 +652,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={() => setParsedBackup(null)}
                     disabled={isRestoring}
-                    className="flex-1 py-2.5 px-4 bg-white dark:bg-[#111614] border border-[#E4DFD5] dark:border-[#2A3A31] text-[#1B2E24] dark:text-[#EDEDE8] font-bold rounded-xl text-xs hover:bg-[#FAF8F5] transition-all cursor-pointer"
+                    className="flex-1 py-2.5 px-4 bg-white dark:bg-[#030712] border border-[#E4DFD5] dark:border-[#1e293b] text-[#1B2E24] dark:text-[#EDEDE8] font-bold rounded-xl text-xs hover:bg-[#FAF8F5] transition-all cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -660,7 +660,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={handleExecuteRestore}
                     disabled={isRestoring}
-                    className="flex-1 py-2.5 px-4 bg-[#1B2E24] dark:bg-[#C8A96E] hover:bg-[#14231B] dark:hover:bg-[#b99859] disabled:opacity-40 text-white dark:text-[#111614] font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
+                    className="flex-1 py-2.5 px-4 bg-[#1B2E24] dark:bg-[#38bdf8] hover:bg-[#080e1a] dark:hover:bg-[#0284c7] disabled:opacity-40 text-white dark:text-[#030712] font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer"
                   >
                     {isRestoring ? (
                       <>

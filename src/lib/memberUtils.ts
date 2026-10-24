@@ -84,6 +84,56 @@ export function calcularIdade(nascimento?: string | null): number | null {
   return age >= 0 ? age : null;
 }
 
+export interface StatusFaixaUPA {
+  idade: number | null;
+  faixa: 'menor_12' | 'ativo_upa' | 'transicao_ump' | 'sem_data';
+  rotulo: string;
+  badgeClass: string;
+}
+
+/**
+ * Determina o enquadramento do adolescente nas faixas etárias da UPA / IPB:
+ * - Menos de 12 anos: Pré-adolescente (sócio cooperador)
+ * - 12 a 17 anos: Faixa regular de sócio ativo da UPA
+ * - 18 anos ou mais: Idade de transição estatutária para a Mocidade (UMP)
+ */
+export function getStatusFaixaEtariaUPA(nascimento?: string | null): StatusFaixaUPA {
+  const idade = calcularIdade(nascimento);
+  if (idade === null) {
+    return {
+      idade: null,
+      faixa: 'sem_data',
+      rotulo: 'Sem nascimento',
+      badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    };
+  }
+
+  if (idade < 12) {
+    return {
+      idade,
+      faixa: 'menor_12',
+      rotulo: `${idade} anos (Menor de 12)`,
+      badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800',
+    };
+  }
+
+  if (idade >= 18) {
+    return {
+      idade,
+      faixa: 'transicao_ump',
+      rotulo: `${idade} anos (Transição UMP)`,
+      badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800',
+    };
+  }
+
+  return {
+    idade,
+    faixa: 'ativo_upa',
+    rotulo: `${idade} anos (UPA)`,
+    badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800',
+  };
+}
+
 /**
  * Aplica máscara de proteção de dados (LGPD) no CPF.
  * Exemplo: "123.456.789-00" ou "12345678900" -> "***.456.789-**"

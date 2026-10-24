@@ -15,15 +15,15 @@ export function useMembers() {
 
   useEffect(() => {
     const handleUpdate = () => refresh();
-    dbEvents.addEventListener('uph_db_members', handleUpdate);
+    dbEvents.addEventListener('upa_db_members', handleUpdate);
 
     // Sincroniza com a verdade do servidor na inicialização
     syncClient.fetchMembers().then(() => refresh());
 
-    return () => dbEvents.removeEventListener('uph_db_members', handleUpdate);
+    return () => dbEvents.removeEventListener('upa_db_members', handleUpdate);
   }, [refresh]);
 
-  const addMember = async (name: string, cargo: string, uphEntryDate?: string, extraFields?: Partial<Member>) => {
+  const addMember = async (name: string, cargo: string, entryDate?: string, extraFields?: Partial<Member>) => {
     const existingPins = new Set(members.map(m => m.pinCode).filter(Boolean));
     let pinCode = extraFields?.pinCode || '';
     if (!pinCode) {
@@ -41,8 +41,9 @@ export function useMembers() {
     const newMember: Member = {
       id: `mbr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       name,
-      cargo: cargo || 'Membro',
-      uphEntryDate: uphEntryDate || undefined,
+      cargo: cargo || 'Sócio Ativo',
+      upaEntryDate: entryDate || undefined,
+      uphEntryDate: entryDate || undefined,
       pinCode,
       createdAt: Date.now(),
       ...extraFields
@@ -110,9 +111,9 @@ export function useSessions() {
 
   useEffect(() => {
     const handleUpdate = () => refresh();
-    dbEvents.addEventListener('uph_db_sessions', handleUpdate);
+    dbEvents.addEventListener('upa_db_sessions', handleUpdate);
     syncClient.fetchSessions().then(() => refresh());
-    return () => dbEvents.removeEventListener('uph_db_sessions', handleUpdate);
+    return () => dbEvents.removeEventListener('upa_db_sessions', handleUpdate);
   }, [refresh]);
 
   const addSession = async (session: Omit<AttendanceSession, 'id'>) => {
@@ -153,7 +154,7 @@ export function useElections() {
 
   useEffect(() => {
     const handleUpdate = () => refresh();
-    dbEvents.addEventListener('uph_db_elections', handleUpdate);
+    dbEvents.addEventListener('upa_db_elections', handleUpdate);
 
     // Polling em background a cada 2.5s para sincronizar votos ao vivo de outros aparelhos
     syncClient.fetchElections().then(data => setElections(data));
@@ -164,7 +165,7 @@ export function useElections() {
     }, 2500);
 
     return () => {
-      dbEvents.removeEventListener('uph_db_elections', handleUpdate);
+      dbEvents.removeEventListener('upa_db_elections', handleUpdate);
       clearInterval(interval);
     };
   }, [refresh]);
@@ -212,9 +213,9 @@ export function useTreasury() {
 
   useEffect(() => {
     const handleUpdate = () => refresh();
-    dbEvents.addEventListener('uph_db_treasury', handleUpdate);
+    dbEvents.addEventListener('upa_db_treasury', handleUpdate);
     syncClient.fetchTreasury().then(() => refresh());
-    return () => dbEvents.removeEventListener('uph_db_treasury', handleUpdate);
+    return () => dbEvents.removeEventListener('upa_db_treasury', handleUpdate);
   }, [refresh]);
 
   const addTransaction = async (tx: Omit<TreasuryTransaction, 'id' | 'createdAt'>) => {

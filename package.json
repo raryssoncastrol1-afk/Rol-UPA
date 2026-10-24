@@ -1,5 +1,5 @@
 {
-  "name": "uph-rol-membros",
+  "name": "upa-rol-membros",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -16,6 +16,7 @@
     "@mlc-ai/web-llm": "^0.2.84",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
+    "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
@@ -31,6 +32,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
