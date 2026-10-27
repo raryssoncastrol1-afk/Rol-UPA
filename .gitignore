@@ -8,3 +8,8 @@ coverage/
 *.db-journal
 .env*
 !.env.example
+*firebase*config*.json
+*credentials*.json
+*.pem
+*.key
+
